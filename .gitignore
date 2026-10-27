@@ -22,3 +22,11 @@ firebase-debug.log
 ui-debug.log
 firestore-debug.log
 .firebase/
+
+# Supabase: secretos y archivos locales del CLI
+supabase/.env
+supabase/.temp/
+supabase/.branches/
+# Claves de cuentas de servicio (NUNCA al repositorio)
+*-firebase-adminsdk-*.json
+service-account*.json

@@ -27,7 +27,6 @@ fun HomePlaceholderScreen(
         Rol.ALUMNO -> R.string.rol_alumno
         Rol.TUTOR -> R.string.rol_tutor
         Rol.PROFESOR -> R.string.rol_profesor
-        Rol.PREFECTO -> R.string.rol_prefecto
         Rol.ADMIN -> R.string.rol_admin
     }
     Scaffold { padding ->

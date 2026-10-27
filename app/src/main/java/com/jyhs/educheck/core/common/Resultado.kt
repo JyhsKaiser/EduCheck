@@ -10,5 +10,6 @@ enum class MotivoError {
     SIN_RED,
     CREDENCIALES,
     SIN_PERFIL,
+    CUENTA_INACTIVA,
     DESCONOCIDO,
 }

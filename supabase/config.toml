@@ -1,0 +1,46 @@
+# Configuración de Supabase CLI para EduCheck.
+# Si el CLI pide más claves, ejecuta `supabase init` en otra carpeta y copia solo las secciones [functions.*].
+project_id = "educheck"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+# Las funciones NO usan Supabase Auth: validan el ID token de Firebase (o la clave del cron) por su cuenta.
+[functions.fcm-token]
+verify_jwt = false
+[functions.evento]
+verify_jwt = false
+[functions.latido]
+verify_jwt = false
+[functions.emergencia]
+verify_jwt = false
+[functions.justificante]
+verify_jwt = false
+[functions.media-upload-url]
+verify_jwt = false
+[functions.media-download-url]
+verify_jwt = false
+[functions.admin-usuarios]
+verify_jwt = false
+[functions.sincronizar-horarios]
+verify_jwt = false
+[functions.evaluar-avisos]
+verify_jwt = false
+[functions.limpiar-archivos]
+verify_jwt = false

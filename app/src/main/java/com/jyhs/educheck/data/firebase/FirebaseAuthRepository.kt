@@ -43,17 +43,20 @@ class FirebaseAuthRepository @Inject constructor(
             if (usuario == null) {
                 Resultado.Error(MotivoError.CREDENCIALES)
             } else {
-                val perfil = firestore.collection(COLECCION_USUARIOS).document(usuario.uid).get().await()
-                val rol = perfil.getString("rol")?.let { nombre -> Rol.entries.firstOrNull { it.name == nombre } }
+                val perfil = firestore.collection(FirestoreColecciones.USUARIOS).document(usuario.uid).get().await()
+                val rol = perfil.getString(FirestoreCampos.ROL)?.let { nombre -> Rol.entries.firstOrNull { it.name == nombre } }
                 if (rol == null) {
                     auth.signOut()
                     Resultado.Error(MotivoError.SIN_PERFIL)
+                } else if (perfil.getBoolean(FirestoreCampos.ACTIVO) != true) {
+                    auth.signOut()
+                    Resultado.Error(MotivoError.CUENTA_INACTIVA)
                 } else {
                     val nueva = Sesion(
                         uid = usuario.uid,
                         email = usuario.email.orEmpty(),
                         rol = rol,
-                        plantelId = perfil.getString("plantelId"),
+                        plantelId = perfil.getString(FirestoreCampos.PLANTEL_ID),
                     )
                     prefs.guardar(nueva)
                     Resultado.Ok(nueva)
@@ -88,6 +91,5 @@ class FirebaseAuthRepository @Inject constructor(
 
     private companion object {
         const val TAG = "AuthRepository"
-        const val COLECCION_USUARIOS = "usuarios"
     }
 }

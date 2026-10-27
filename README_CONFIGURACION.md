@@ -11,7 +11,8 @@ revisa la sección «Si algo falla».
 2. En la consola de Firebase:
    - **Authentication → Sign-in method:** habilita *Correo electrónico/contraseña*.
    - **Firestore Database → Crear base de datos** (modo producción). La ubicación no se puede cambiar después.
-   - Publica las reglas de `firestore.rules` (pestaña *Reglas*, o con `firebase deploy --only firestore:rules`).
+   - Publica `firestore.rules` e índices: `firebase deploy --only firestore` (o pega las reglas en la pestaña *Reglas*).
+     Modelo y reglas explicados en `docs/MODELO_FIRESTORE.md`.
 3. Crea el primer usuario:
    - **Authentication → Users → Agregar usuario** (correo y contraseña) y copia su **UID**.
    - **Firestore → Iniciar colección** `usuarios` → documento con **ID = UID** y los campos
@@ -20,7 +21,7 @@ revisa la sección «Si algo falla».
 ## 2. Ejecutar
 Sincroniza Gradle y ejecuta la app. Con el usuario anterior debes ver el login y, al entrar,
 la pantalla provisional «Sesión iniciada como <rol>». Cerrar sesión regresa al login.
-Pruebas unitarias: `./gradlew testDebugUnitTest`.
+Las pruebas quedan para el final del proyecto, cuando se indique.
 
 ## 3. Firebase Emulator Suite (opcional, sin gastar cuota)
 ```
@@ -31,6 +32,14 @@ En `app/build.gradle.kts`, cambia `USE_FIREBASE_EMULATOR` a `"true"` (tipo `debu
 La app usa `10.0.2.2` (emulador de Android). Con un teléfono físico, usa la IP de tu computadora en
 `FirebaseModule` y en `network_security_config_debug.xml`. Crea el usuario y el documento
 `usuarios/{uid}` desde la UI del emulador.
+
+## 3b. Datos de ejemplo para el emulador
+```
+firebase emulators:start --project <ID_DE_TU_PROYECTO>
+cd firebase/seed && npm install && node seed.mjs <ID_DE_TU_PROYECTO>
+```
+Crea un plantel, un grupo con horario y cinco cuentas (`admin@`, `prefecto@`, `profesor@`, `tutor@`, `alumno@educheck.test`,
+contraseña `Educheck123!`). El script solo habla con los emuladores. Si cambias de proyecto, repite con su ID.
 
 ## 4. Qué se decidió
 - `minSdk = 31` (el documento decía 26): permite leer el BSSID con la API moderna sin rutas de compatibilidad.

@@ -1,4 +1,137 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "presencias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tutorUids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presencias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "plantelId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "horaEntrada",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "ausencias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tutorUids",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "horarios",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profesorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "diaSemana",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "horaInicio",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sesiones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profesorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fecha",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "horaInicio",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "justificantes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "plantelId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "justificantes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tutorUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "emergencias",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "plantelId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "estado",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creadoEn",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

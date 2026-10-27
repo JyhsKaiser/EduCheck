@@ -1,4 +1,4 @@
 package com.jyhs.educheck.domain.model
 
-/** Niveles de usuario de la APK única. ADMIN cumple también la función de coordinador académico. */
-enum class Rol { ALUMNO, TUTOR, PROFESOR, PREFECTO, ADMIN }
+/** Niveles de usuario de la APK única. ADMIN es también el coordinador académico y hace las funciones de prefectura (escáner QR, justificantes, dashboard). */
+enum class Rol { ALUMNO, TUTOR, PROFESOR, ADMIN }

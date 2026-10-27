@@ -9,6 +9,7 @@
     <string name="error_credenciales">Correo o contraseña incorrectos.</string>
     <string name="error_sin_red">Sin conexión. Verifica tu internet e inténtalo de nuevo.</string>
     <string name="error_sin_perfil">Tu cuenta aún no tiene un perfil asignado. Contacta al administrador.</string>
+    <string name="error_cuenta_inactiva">Tu cuenta está desactivada. Contacta al administrador.</string>
     <string name="error_desconocido">Ocurrió un error inesperado. Inténtalo de nuevo.</string>
 
     <!-- Inicio provisional -->
@@ -17,7 +18,6 @@
     <string name="rol_alumno">Alumno</string>
     <string name="rol_tutor">Tutor</string>
     <string name="rol_profesor">Profesor</string>
-    <string name="rol_prefecto">Prefecto</string>
     <string name="rol_admin">Administrador</string>
 
     <!-- Canales de notificación -->

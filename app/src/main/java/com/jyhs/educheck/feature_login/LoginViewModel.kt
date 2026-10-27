@@ -52,6 +52,7 @@ class LoginViewModel @Inject constructor(
         MotivoError.SIN_RED -> R.string.error_sin_red
         MotivoError.CREDENCIALES -> R.string.error_credenciales
         MotivoError.SIN_PERFIL -> R.string.error_sin_perfil
+        MotivoError.CUENTA_INACTIVA -> R.string.error_cuenta_inactiva
         MotivoError.DESCONOCIDO -> R.string.error_desconocido
     }
 }

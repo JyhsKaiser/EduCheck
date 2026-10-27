@@ -20,7 +20,7 @@ data class AsistenciaEntity(
     val eventoEpochMs: Long,           // hora del evento (reloj confiable)
     val elapsedRealtimeMs: Long,       // SystemClock.elapsedRealtime() al registrar
     val relojConfiable: Boolean,
-    val metodo: String,                // GEOCERCA_WIFI | GEOCERCA | QR_PREFECTURA
+    val metodo: String,                // GEOCERCA_WIFI | GEOCERCA | QR_ADMIN
     val confianza: Int,                // 0 = BAJA, 1 = ALTA
     val latitud: Double?,
     val longitud: Double?,
