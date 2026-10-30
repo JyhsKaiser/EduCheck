@@ -14,7 +14,10 @@ data class NewUser(
     val password: String,
     val name: String,
     val role: Role,
+    /** Existing student record without an account to link (STUDENT role). */
     val studentId: String?,
+    /** New student record created together with the account (STUDENT role). */
+    val newStudent: StudentInput? = null,
 )
 
 data class Student(

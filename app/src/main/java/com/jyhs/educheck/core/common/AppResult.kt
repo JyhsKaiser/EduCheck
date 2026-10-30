@@ -3,7 +3,7 @@ package com.jyhs.educheck.core.common
 /** Result of an operation that can fail for a known reason. */
 sealed interface AppResult<out T> {
     data class Ok<out T>(val value: T) : AppResult<T>
-    data class Error(val reason: ErrorReason) : AppResult<Nothing>
+    data class Error(val reason: ErrorReason, val detail: String? = null) : AppResult<Nothing>
 }
 
 enum class ErrorReason {
@@ -17,6 +17,15 @@ enum class ErrorReason {
     FORBIDDEN,
     NOT_FOUND,
     ALREADY_LINKED,
+    INVALID_TIME,
+    SCHEDULE_CONFLICT,
+    HAS_DEPENDENTS,
+    DUPLICATE,
+    LIMIT_EXCEEDED,
+    PERMISSION_DENIED,
+    LOCATION_UNAVAILABLE,
+    WIFI_UNAVAILABLE,
+    FILE_UNREADABLE,
     UNKNOWN,
 }
 

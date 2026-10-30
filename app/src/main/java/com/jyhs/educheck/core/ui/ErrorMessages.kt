@@ -16,5 +16,14 @@ fun ErrorReason.messageRes(): Int = when (this) {
     ErrorReason.FORBIDDEN -> R.string.error_forbidden
     ErrorReason.NOT_FOUND -> R.string.error_not_found
     ErrorReason.ALREADY_LINKED -> R.string.error_already_linked
+    ErrorReason.INVALID_TIME -> R.string.error_invalid_time
+    ErrorReason.SCHEDULE_CONFLICT -> R.string.error_schedule_conflict
+    ErrorReason.HAS_DEPENDENTS -> R.string.error_has_dependents
+    ErrorReason.DUPLICATE -> R.string.error_duplicate
+    ErrorReason.LIMIT_EXCEEDED -> R.string.error_limit_exceeded
+    ErrorReason.PERMISSION_DENIED -> R.string.error_permission_denied
+    ErrorReason.LOCATION_UNAVAILABLE -> R.string.error_location_unavailable
+    ErrorReason.WIFI_UNAVAILABLE -> R.string.error_wifi_unavailable
+    ErrorReason.FILE_UNREADABLE -> R.string.error_file_unreadable
     ErrorReason.UNKNOWN -> R.string.error_unknown
 }

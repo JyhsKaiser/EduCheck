@@ -40,6 +40,35 @@ object FirestoreFields {
     const val GROUP_ID = "groupId"
     const val STUDENT_UID = "studentUid"
 
+    // subjects, groups, assignments, schedules
+    const val CODE = "code"
+    const val SEMESTER = "semester"
+    const val SHIFT = "shift"
+    const val PERIOD = "period"
+    const val TEACHER_UIDS = "teacherUids"
+    const val GROUP_STUDENTS = "students"     // groups/{id}.students: [{id, name, studentNumber}]
+    const val SUBJECT_ID = "subjectId"
+    const val SUBJECT_NAME = "subjectName"
+    const val GROUP_NAME = "groupName"
+    const val TEACHER_UID = "teacherUid"
+    const val ASSIGNMENT_ID = "assignmentId"
+    const val WEEKDAY = "weekday"
+    const val START_TIME = "startTime"
+    const val END_TIME = "endTime"
+    const val ROOM = "room"
+
+    // config/campus
+    const val CENTER = "center"
+    const val RADIUS_METERS = "radiusMeters"
+    const val TOLERANCE_METERS = "toleranceMeters"
+    const val TOLERANCE_MINUTES = "toleranceMinutes"
+    const val TIME_ZONE = "timeZone"
+    const val BSSIDS = "bssids"
+
+    // grades/{assignmentId}_{studentId}
+    const val PARTIALS = "partials"
+    const val IMPORTED_AT = "importedAt"
+
     // devices/{installId}
     const val USER_UID = "userUid"
     const val MODEL = "model"

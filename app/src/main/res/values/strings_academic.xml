@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common actions -->
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_delete">Eliminar</string>
+
+    <!-- Errors -->
+    <string name="error_invalid_time">Usa el formato HH:mm (24 horas) y que la hora de fin sea posterior a la de inicio.</string>
+    <string name="error_schedule_conflict">Choca con otra clase del mismo profesor, grupo o aula: %1$s.</string>
+    <string name="error_has_dependents">No se puede eliminar: hay elementos que dependen de él. Elimínalos primero.</string>
+    <string name="error_duplicate">Ese registro ya existe.</string>
+    <string name="error_limit_exceeded">Un grupo admite como máximo 80 alumnos.</string>
+
+    <!-- Menu -->
+    <string name="admin_subjects_title">Materias</string>
+    <string name="admin_subjects_subtitle">Catálogo de materias</string>
+    <string name="admin_groups_title">Grupos</string>
+    <string name="admin_groups_subtitle">Alumnos, materias, profesores y horarios por grupo</string>
+
+    <!-- Subjects -->
+    <string name="admin_subject_new">Nueva materia</string>
+    <string name="admin_subject_edit">Editar materia</string>
+    <string name="admin_subjects_empty">Aún no hay materias.</string>
+    <string name="field_subject_code">Clave</string>
+    <string name="field_subject_name">Nombre de la materia</string>
+
+    <!-- Groups -->
+    <string name="admin_group_new">Nuevo grupo</string>
+    <string name="admin_group_edit">Editar grupo</string>
+    <string name="admin_group_detail">Grupo</string>
+    <string name="admin_groups_empty">Aún no hay grupos.</string>
+    <string name="field_group_name">Nombre del grupo</string>
+    <string name="field_semester">Semestre</string>
+    <string name="field_period">Periodo</string>
+    <string name="field_period_hint">Por ejemplo 2026-B</string>
+    <string name="field_shift">Turno</string>
+    <string name="shift_morning">Matutino</string>
+    <string name="shift_afternoon">Vespertino</string>
+    <string name="group_summary">Semestre %1$d · %2$s · %3$s · %4$d alumno(s)</string>
+    <string name="group_subjects_title">Materias y profesores</string>
+    <string name="group_no_subjects">Este grupo aún no tiene materias.</string>
+    <string name="action_edit_group">Editar grupo</string>
+    <string name="action_group_students">Alumnos (%1$d)</string>
+    <string name="action_add_subject_to_group">Agregar materia</string>
+    <string name="action_delete_group">Eliminar grupo</string>
+    <string name="confirm_delete_group_title">¿Eliminar este grupo?</string>
+    <string name="confirm_delete_group_message">Se quitará a sus alumnos del grupo. Solo se puede eliminar si no tiene materias.</string>
+    <string name="admin_group_students_title">Alumnos del grupo</string>
+    <string name="group_students_counter">Seleccionados: %1$d de %2$d</string>
+    <string name="student_in_other_group">Ahora en %1$s</string>
+
+    <!-- Assignments -->
+    <string name="admin_assignment_new">Agregar materia al grupo</string>
+    <string name="admin_assignment_detail">Materia del grupo</string>
+    <string name="field_subject">Materia</string>
+    <string name="field_teacher">Profesor</string>
+    <string name="assignment_no_subjects">Primero crea materias en Gestión → Materias.</string>
+    <string name="assignment_no_teachers">No hay profesores activos. Crea su cuenta en Gestión → Usuarios.</string>
+    <string name="action_create_assignment">Agregar</string>
+    <string name="action_delete_assignment">Eliminar materia del grupo</string>
+    <string name="confirm_delete_assignment_title">¿Eliminar esta materia del grupo?</string>
+    <string name="confirm_delete_assignment_message">Solo se puede eliminar si ya no tiene horarios.</string>
+
+    <!-- Schedules -->
+    <string name="admin_schedule_new">Nuevo horario</string>
+    <string name="schedules_title">Horarios</string>
+    <string name="schedules_empty">Aún no hay horarios. Usa el botón + para agregarlos.</string>
+    <string name="schedule_room">Aula %1$s</string>
+    <string name="field_weekdays">Días</string>
+    <string name="field_start_time">Hora de inicio (HH:mm)</string>
+    <string name="field_end_time">Hora de fin (HH:mm)</string>
+    <string name="field_room">Aula</string>
+    <string-array name="weekday_names">
+        <item>Lunes</item>
+        <item>Martes</item>
+        <item>Miércoles</item>
+        <item>Jueves</item>
+        <item>Viernes</item>
+        <item>Sábado</item>
+        <item>Domingo</item>
+    </string-array>
+</resources>

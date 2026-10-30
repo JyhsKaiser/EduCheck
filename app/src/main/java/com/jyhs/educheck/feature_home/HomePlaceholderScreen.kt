@@ -38,11 +38,11 @@ fun HomePlaceholderScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = stringResource(R.string.home_welcome), style = MaterialTheme.typography.headlineSmall)
+//            Text(text = stringResource(R.string.home_welcome), style = MaterialTheme.typography.headlineSmall)
             Text(text = stringResource(roleLabel), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
             Text(text = email, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onSignOut) {
-                Text(stringResource(R.string.home_sign_out))
+//                Text(stringResource(R.string.home_sign_out))
             }
         }
     }

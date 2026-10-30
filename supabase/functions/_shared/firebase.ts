@@ -54,7 +54,7 @@ const SCOPES = [
 
 let cachedToken: { value: string; expiresAtMs: number } | null = null;
 
-async function accessToken(): Promise<string> {
+export async function accessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAtMs - 60_000 > Date.now()) return cachedToken.value;
   const sa = serviceAccount();
   const key = await importPKCS8(sa.private_key, "RS256");
@@ -111,5 +111,55 @@ export async function setRoleClaim(uid: string, role: Role): Promise<void> {
     const text = await res.text();
     if (text.includes("USER_NOT_FOUND")) throw new HttpError(404, "user_not_found");
     throw new Error(`set claim failed: ${res.status} ${text}`);
+  }
+}
+
+// ---------------------------------------------------------------- account management
+const identityUrl = () => `https://identitytoolkit.googleapis.com/v1/projects/${serviceAccount().project_id}`;
+
+async function identityPost(path: string, body: unknown): Promise<Response> {
+  return await fetch(`${identityUrl()}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+/** Creates a Firebase Auth account and returns its uid. */
+export async function createAuthUser(
+  p: { email: string; password: string; displayName: string },
+): Promise<string> {
+  const res = await identityPost("/accounts", {
+    email: p.email,
+    password: p.password,
+    displayName: p.displayName,
+    emailVerified: false,
+    disabled: false,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    if (text.includes("EMAIL_EXISTS")) throw new HttpError(409, "email_exists");
+    if (text.includes("WEAK_PASSWORD")) throw new HttpError(400, "weak_password");
+    if (text.includes("INVALID_EMAIL")) throw new HttpError(400, "invalid_email");
+    throw new Error(`create user failed: ${res.status} ${text}`);
+  }
+  return (await res.json() as { localId: string }).localId;
+}
+
+/** Best-effort rollback of a half-created account. */
+export async function deleteAuthUser(uid: string): Promise<void> {
+  const res = await identityPost("/accounts:delete", { localId: uid });
+  if (!res.ok) throw new Error(`delete user failed: ${res.status} ${await res.text()}`);
+}
+
+/** Disables or re-enables an account. Disabling also revokes its refresh tokens. */
+export async function setAuthUserDisabled(uid: string, disabled: boolean): Promise<void> {
+  const body: Record<string, unknown> = { localId: uid, disableUser: disabled };
+  if (disabled) body.validSince = String(Math.floor(Date.now() / 1000));
+  const res = await identityPost("/accounts:update", body);
+  if (!res.ok) {
+    const text = await res.text();
+    if (text.includes("USER_NOT_FOUND")) throw new HttpError(404, "user_not_found");
+    throw new Error(`update user failed: ${res.status} ${text}`);
   }
 }

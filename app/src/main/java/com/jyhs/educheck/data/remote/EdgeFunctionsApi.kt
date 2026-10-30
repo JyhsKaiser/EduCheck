@@ -23,7 +23,11 @@ data class CreateUserRequest(
     val name: String,
     val role: String,
     val studentId: String? = null,
+    val newStudent: NewStudentDto? = null,
 )
+
+@Serializable
+data class NewStudentDto(val studentNumber: String, val firstNames: String, val lastNames: String)
 
 @Serializable
 data class CreateUserResponse(val ok: Boolean, val uid: String)

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,9 +80,9 @@ fun CenteredMessage(@StringRes text: Int, modifier: Modifier = Modifier) {
 
 /** Shows [errorRes] in a snackbar once and then calls [onShown]. */
 @Composable
-fun rememberErrorHost(@StringRes errorRes: Int?, onShown: () -> Unit): SnackbarHostState {
+fun rememberErrorHost(@StringRes errorRes: Int?, onShown: () -> Unit, errorArg: String? = null): SnackbarHostState {
     val host = remember { SnackbarHostState() }
-    val message = errorRes?.let { stringResource(it) }
+    val message = errorRes?.let { if (errorArg != null) stringResource(it, errorArg) else stringResource(it) }
     LaunchedEffect(message) {
         if (message != null) {
             host.showSnackbar(message)
@@ -104,4 +106,21 @@ fun RadioRow(selected: Boolean, label: String, onClick: () -> Unit) {
         Spacer(Modifier.width(8.dp))
         Text(label)
     }
+}
+
+@Composable
+fun ConfirmDialog(
+    @StringRes title: Int,
+    @StringRes message: Int,
+    @StringRes confirmLabel: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(title)) },
+        text = { Text(stringResource(message)) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(confirmLabel)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }

@@ -43,7 +43,26 @@ class FirestoreStudentRepository @Inject constructor(
             ).await()
             AppResult.Ok(ref.id)
         } else {
-            students.document(id).update(data).await()
+            val studentRef = students.document(id)
+            val groupId = studentRef.get().await().getString(FirestoreFields.GROUP_ID)
+            val batch = firestore.batch()
+            batch.update(studentRef, data)
+            if (groupId != null) {
+                // The group keeps a copy of the student's name and number: keep it in sync.
+                val groupRef = firestore.collection(FirestoreCollections.GROUPS).document(groupId)
+                val members = groupRef.get().await().groupMembers().map { member ->
+                    if (member.id == id) {
+                        member.copy(
+                            name = (input.firstNames + " " + input.lastNames).trim(),
+                            studentNumber = input.studentNumber,
+                        )
+                    } else {
+                        member
+                    }
+                }
+                batch.update(groupRef, FirestoreFields.GROUP_STUDENTS, members.map { it.toMap() })
+            }
+            batch.commit().await()
             AppResult.Ok(id)
         }
     }

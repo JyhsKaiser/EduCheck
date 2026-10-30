@@ -46,13 +46,16 @@ fun CreateUserScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedTextField(
-                value = ui.name,
-                onValueChange = vm::onNameChange,
-                label = { Text(stringResource(R.string.field_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // A student account takes its name from the student record, so the field is only for other roles.
+            if (ui.role != Role.STUDENT) {
+                OutlinedTextField(
+                    value = ui.name,
+                    onValueChange = vm::onNameChange,
+                    label = { Text(stringResource(R.string.field_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             OutlinedTextField(
                 value = ui.email,
                 onValueChange = vm::onEmailChange,
@@ -81,18 +84,55 @@ fun CreateUserScreen(
             }
 
             if (ui.role == Role.STUDENT) {
-                Text(stringResource(R.string.field_link_student), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.field_student_record), style = MaterialTheme.typography.titleSmall)
                 RadioRow(
-                    selected = ui.studentId == null,
-                    label = stringResource(R.string.option_no_link),
-                    onClick = { vm.onStudentChange(null) },
+                    selected = ui.studentMode == StudentMode.NEW,
+                    label = stringResource(R.string.option_new_student),
+                    onClick = { vm.onStudentModeChange(StudentMode.NEW) },
                 )
-                ui.availableStudents.forEach { student ->
-                    RadioRow(
-                        selected = ui.studentId == student.id,
-                        label = student.fullName + " (" + student.studentNumber + ")",
-                        onClick = { vm.onStudentChange(student.id) },
+                RadioRow(
+                    selected = ui.studentMode == StudentMode.EXISTING,
+                    label = stringResource(R.string.option_existing_student),
+                    onClick = { vm.onStudentModeChange(StudentMode.EXISTING) },
+                )
+
+                if (ui.studentMode == StudentMode.NEW) {
+                    OutlinedTextField(
+                        value = ui.studentNumber,
+                        onValueChange = vm::onStudentNumberChange,
+                        label = { Text(stringResource(R.string.field_student_number)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
                     )
+                    OutlinedTextField(
+                        value = ui.firstNames,
+                        onValueChange = vm::onFirstNamesChange,
+                        label = { Text(stringResource(R.string.field_first_names)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = ui.lastNames,
+                        onValueChange = vm::onLastNamesChange,
+                        label = { Text(stringResource(R.string.field_last_names)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    if (ui.availableStudents.isEmpty()) {
+                        Text(
+                            stringResource(R.string.students_none_without_account),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    ui.availableStudents.forEach { student ->
+                        RadioRow(
+                            selected = ui.studentId == student.id,
+                            label = student.fullName + " (" + student.studentNumber + ")",
+                            onClick = { vm.onStudentChange(student.id) },
+                        )
+                    }
                 }
             }
 

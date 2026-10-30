@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_add">Agregar</string>
+
+    <!-- Errors and messages -->
+    <string name="error_permission_denied">Falta el permiso de ubicación. Actívalo en los ajustes del teléfono.</string>
+    <string name="error_location_unavailable">No se pudo obtener la ubicación. Activa el GPS e inténtalo de nuevo.</string>
+    <string name="error_wifi_unavailable">No se detectó el Wi-Fi. Conéctate a la red del plantel y activa la ubicación del teléfono.</string>
+    <string name="error_file_unreadable">No se pudo leer el archivo. Verifica que sea un CSV de menos de 1 MB.</string>
+    <string name="error_invalid_bssid">El BSSID debe tener el formato AA:BB:CC:DD:EE:FF.</string>
+    <string name="error_campus_location_required">Elige la ubicación del plantel en el mapa o usa tu ubicación actual.</string>
+    <string name="info_campus_saved">Configuración del plantel guardada.</string>
+    <string name="info_grades_imported">Calificaciones importadas: %1$s.</string>
+
+    <!-- Menu -->
+    <string name="admin_campus_title">Plantel</string>
+    <string name="admin_campus_subtitle">Geocerca, Wi-Fi escolar y tolerancias</string>
+    <string name="admin_grades_title">Importar calificaciones</string>
+    <string name="admin_grades_subtitle">Carga de un archivo CSV del otro sistema</string>
+
+    <!-- Campus -->
+    <string name="campus_map_hint">Toca el mapa para colocar el centro del plantel. El círculo muestra el radio de la geocerca.</string>
+    <string name="action_use_my_location">Usar mi ubicación actual</string>
+    <string name="campus_coordinates">Centro: %1$.6f, %2$.6f</string>
+    <string name="field_campus_name">Nombre del plantel</string>
+    <string name="field_radius_meters">Radio de la geocerca (metros)</string>
+    <string name="field_tolerance_meters">Tolerancia de distancia (metros)</string>
+    <string name="field_tolerance_minutes">Tolerancia de tiempo (minutos)</string>
+    <string name="field_time_zone">Zona horaria</string>
+    <string name="field_bssids">Wi-Fi del plantel (BSSID)</string>
+    <string name="field_bssids_hint">Cada punto de acceso tiene un BSSID distinto. Conéctate a la red escolar para detectarlo, o captúralo a mano.</string>
+    <string name="action_detect_wifi">Detectar Wi-Fi actual</string>
+    <string name="field_bssid_manual">BSSID manual</string>
+
+    <!-- Grades import -->
+    <string name="grades_format_title">Formato del archivo</string>
+    <string name="grades_format_help">CSV con encabezado y estas columnas: matrícula del alumno, clave de la materia, nombre del grupo y hasta tres parciales (0 a 10, vacío si no hay). Acepta coma o punto y coma como separador. Las calificaciones de un alumno ya importadas se reemplazan.</string>
+    <string name="action_pick_csv">Elegir archivo CSV</string>
+    <string name="grades_summary">Válidas: %1$d · Con error: %2$d · Filas leídas: %3$d</string>
+    <string name="grades_error_line">Línea %1$d: %2$s</string>
+    <string name="grades_more_errors">… y %1$d errores más.</string>
+    <string name="grades_import_note">Las filas con error no se importan.</string>
+    <string name="action_import_grades">Importar %1$d calificaciones</string>
+    <string name="grades_error_header">encabezado inválido (se esperan studentNumber, subjectCode, groupName y partial1 a partial3)</string>
+    <string name="grades_error_columns">faltan datos en la fila</string>
+    <string name="grades_error_student_not_found">alumno no encontrado</string>
+    <string name="grades_error_subject_not_found">materia no encontrada</string>
+    <string name="grades_error_group_not_found">grupo no encontrado</string>
+    <string name="grades_error_group_ambiguous">hay varios grupos con ese nombre</string>
+    <string name="grades_error_no_assignment">ese grupo no tiene esa materia</string>
+    <string name="grades_error_not_in_group">el alumno no pertenece a ese grupo</string>
+    <string name="grades_error_invalid_grade">calificación inválida (0 a 10)</string>
+    <string name="grades_error_duplicate">fila repetida</string>
+    <string name="grades_error_too_many">el archivo tiene demasiadas filas</string>
+</resources>

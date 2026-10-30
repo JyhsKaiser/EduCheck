@@ -25,8 +25,27 @@ class CreateUserUseCase @Inject constructor(private val repository: UserAdminRep
         val email = newUser.email.trim()
         if (newUser.name.isBlank() || !EMAIL.matches(email)) return AppResult.Error(ErrorReason.INVALID_INPUT)
         if (newUser.password.length < MIN_PASSWORD) return AppResult.Error(ErrorReason.WEAK_PASSWORD)
-        if (newUser.studentId != null && newUser.role != Role.STUDENT) return AppResult.Error(ErrorReason.INVALID_INPUT)
-        return repository.createUser(newUser.copy(email = email, name = newUser.name.trim()))
+        if (newUser.role == Role.STUDENT) {
+            // A student account always has a student record: a new one or an existing one without account.
+            if ((newUser.studentId == null) == (newUser.newStudent == null)) {
+                return AppResult.Error(ErrorReason.INVALID_INPUT)
+            }
+            val student = newUser.newStudent
+            if (student != null && (student.studentNumber.isBlank() || student.firstNames.isBlank() || student.lastNames.isBlank())) {
+                return AppResult.Error(ErrorReason.INVALID_INPUT)
+            }
+        } else if (newUser.studentId != null || newUser.newStudent != null) {
+            return AppResult.Error(ErrorReason.INVALID_INPUT)
+        }
+        return repository.createUser(
+            newUser.copy(
+                email = email,
+                name = newUser.name.trim(),
+                newStudent = newUser.newStudent?.let {
+                    StudentInput(it.studentNumber.trim(), it.firstNames.trim(), it.lastNames.trim())
+                },
+            ),
+        )
     }
 
     private companion object {

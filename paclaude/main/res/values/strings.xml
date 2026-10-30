@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">EduCheck</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_email">Correo electrónico</string>
+    <string name="login_password">Contraseña</string>
+    <string name="login_submit">Entrar</string>
+    <string name="error_invalid_credentials">Correo o contraseña incorrectos.</string>
+    <string name="error_no_network">Sin conexión. Verifica tu internet e inténtalo de nuevo.</string>
+    <string name="error_no_profile">Tu cuenta aún no tiene un perfil asignado. Contacta al administrador.</string>
+    <string name="error_account_inactive">Tu cuenta está desactivada. Contacta al administrador.</string>
+    <string name="error_unknown">Ocurrió un error inesperado. Inténtalo de nuevo.</string>
+
+    <!-- Account and navigation -->
+    <string name="account_signed_in_as">Sesión iniciada como</string>
+    <string name="account_sign_out">Cerrar sesión</string>
+    <string name="coming_soon">Próximamente</string>
+    <string name="tab_today">Hoy</string>
+    <string name="tab_board">Tablero</string>
+    <string name="tab_history">Historial</string>
+    <string name="tab_justifications">Justificantes</string>
+    <string name="tab_my_day">Mi día</string>
+    <string name="tab_groups">Grupos</string>
+    <string name="tab_grades">Calificaciones</string>
+    <string name="tab_dashboard">Panel</string>
+    <string name="tab_management">Gestión</string>
+    <string name="tab_account">Cuenta</string>
+    <string name="role_student">Alumno</string>
+    <string name="role_guardian">Tutor</string>
+    <string name="role_teacher">Profesor</string>
+    <string name="role_admin">Administrador</string>
+
+    <!-- Notification channels -->
+    <string name="channel_check_ins">Ingresos y salidas</string>
+    <string name="channel_absences">Inasistencias y alertas</string>
+    <string name="channel_justifications">Justificantes</string>
+    <string name="channel_emergencies">Emergencias</string>
+    <string name="channel_administration">Administración</string>
+</resources>

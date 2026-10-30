@@ -1,7 +1,6 @@
-# Append to supabase/config.toml (created by `supabase init`).
-# All EduCheck functions validate the Firebase ID token themselves.
-[functions.ping]
+# Append to supabase/config.toml (functions already listed in Sprint 1 stay as they are).
+[functions.create-user]
 verify_jwt = false
 
-[functions.set-role]
+[functions.set-user-active]
 verify_jwt = false
