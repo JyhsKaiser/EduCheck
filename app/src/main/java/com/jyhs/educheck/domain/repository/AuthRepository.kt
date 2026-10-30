@@ -1,17 +1,17 @@
 package com.jyhs.educheck.domain.repository
 
-import com.jyhs.educheck.core.common.Resultado
-import com.jyhs.educheck.domain.model.Sesion
+import com.jyhs.educheck.core.common.AppResult
+import com.jyhs.educheck.domain.model.Session
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
-    /** Sesión local (uid y rol). Permite abrir la app sin conexión tras el primer ingreso. */
-    val sesion: Flow<Sesion?>
+    /** Local session (uid and role). Lets the app open offline after the first sign-in. */
+    val session: Flow<Session?>
 
-    /** Descarta la sesión local si Firebase ya no tiene un usuario autenticado. */
-    suspend fun restaurarSesion()
+    /** Discards the local session if Firebase no longer has an authenticated user. */
+    suspend fun restoreSession()
 
-    suspend fun iniciarSesion(email: String, clave: String): Resultado<Sesion>
+    suspend fun signIn(email: String, password: String): AppResult<Session>
 
-    suspend fun cerrarSesion()
+    suspend fun signOut()
 }

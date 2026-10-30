@@ -2,7 +2,7 @@ package com.jyhs.educheck.di
 
 import android.content.Context
 import androidx.room.Room
-import com.jyhs.educheck.data.local.dao.AsistenciaDao
+import com.jyhs.educheck.data.local.dao.PresenceDao
 import com.jyhs.educheck.data.local.db.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -21,5 +21,5 @@ object DatabaseModule {
         Room.databaseBuilder(context, AppDatabase::class.java, "educheck.db").build()
 
     @Provides
-    fun provideAsistenciaDao(db: AppDatabase): AsistenciaDao = db.asistenciaDao()
+    fun providePresenceDao(db: AppDatabase): PresenceDao = db.presenceDao()
 }

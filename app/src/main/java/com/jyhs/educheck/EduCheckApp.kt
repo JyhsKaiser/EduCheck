@@ -12,12 +12,12 @@ class EduCheckApp : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
 
-    // WorkManager se inicializa bajo demanda con Hilt (el inicializador por defecto se quita en el manifest).
+    // WorkManager is initialized on demand with Hilt (the default initializer is removed in the manifest).
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
-        NotificationChannels.crear(this)
+        NotificationChannels.create(this)
     }
 }

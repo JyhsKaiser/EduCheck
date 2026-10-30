@@ -14,20 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.jyhs.educheck.R
-import com.jyhs.educheck.domain.model.Rol
+import com.jyhs.educheck.domain.model.Role
 
-/** Pantalla provisional para comprobar el login y el enrutado por rol. Se sustituirá por un grafo por rol. */
+/** Provisional screen to verify login and role routing. It will be replaced by one graph per role. */
 @Composable
 fun HomePlaceholderScreen(
-    rol: Rol,
+    role: Role,
     email: String,
-    onCerrarSesion: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
-    val etiquetaRol = when (rol) {
-        Rol.ALUMNO -> R.string.rol_alumno
-        Rol.TUTOR -> R.string.rol_tutor
-        Rol.PROFESOR -> R.string.rol_profesor
-        Rol.ADMIN -> R.string.rol_admin
+    val roleLabel = when (role) {
+        Role.STUDENT -> R.string.role_student
+        Role.GUARDIAN -> R.string.role_guardian
+        Role.TEACHER -> R.string.role_teacher
+        Role.ADMIN -> R.string.role_admin
     }
     Scaffold { padding ->
         Column(
@@ -38,11 +38,11 @@ fun HomePlaceholderScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = stringResource(R.string.home_bienvenida), style = MaterialTheme.typography.headlineSmall)
-            Text(text = stringResource(etiquetaRol), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+            Text(text = stringResource(R.string.home_welcome), style = MaterialTheme.typography.headlineSmall)
+            Text(text = stringResource(roleLabel), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
             Text(text = email, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onCerrarSesion) {
-                Text(stringResource(R.string.home_cerrar_sesion))
+            Button(onClick = onSignOut) {
+                Text(stringResource(R.string.home_sign_out))
             }
         }
     }

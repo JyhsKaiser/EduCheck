@@ -1,350 +1,340 @@
 rules_version = '2';
 
 // =====================================================================================
-//  EduCheck · Reglas de seguridad de Firestore (v1.3, etapa 1)
-//  - El rol se lee de usuarios/{uid} (cada evaluación cuesta una lectura; más adelante
-//    se puede pasar a custom claims con Admin SDK).
-//  - La geocerca se valida AQUÍ con latlng.distance(): el cliente no puede registrar
-//    una entrada fuera del radio + tolerancia del plantel.
-//  - Roles: ALUMNO, TUTOR, PROFESOR y ADMIN (el ADMIN es también el coordinador académico y
-//    hace las funciones de prefectura: escáner QR, justificantes y dashboard).
-//  - Los avisos push, las ausencias, las tolerancias y el TOTP los resuelve el backend
-//    (Supabase Edge Functions con la cuenta de servicio): por eso ausencias/ y notificaciones/
-//    son de solo lectura para los clientes.
+//  EduCheck · Firestore security rules (v1.3, English schema)
+//  - The role is read from users/{uid} (each evaluation costs one read). Sprint 1 moves it to
+//    a Firebase custom claim set by a Supabase Edge Function; only role() has to change.
+//  - The geofence is validated HERE with latlng.distance(): the client cannot register an
+//    entry outside the campus radius + tolerance (single campus: config/campus).
+//  - Roles: STUDENT, GUARDIAN, TEACHER and ADMIN (ADMIN is also the academic coordinator and
+//    covers the prefecture duties: manual attendance, justifications and dashboard).
+//  - Push notices, absences and tolerances are resolved by the backend (Supabase Edge
+//    Functions with the service account): absences/ and notifications/ are read-only for clients.
 // =====================================================================================
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---------------------------------------------------------------- utilidades
-    function autenticado() {
+    // ---------------------------------------------------------------- helpers
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    function perfil() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function esRol(r) {
-      return autenticado() && perfil().activo == true && perfil().rol == r;
+    // Sprint 1: replace with request.auth.token.role (custom claim).
+    function hasRole(r) {
+      return isSignedIn() && profile().active == true && profile().role == r;
     }
 
-    function esAdmin() {
-      return esRol('ADMIN');
+    function isAdmin() {
+      return hasRole('ADMIN');
     }
 
-    function mismoPlantel(plantelId) {
-      return autenticado() && perfil().activo == true && perfil().plantelId == plantelId;
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
-    function soloCambia(campos) {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
-    }
-
-    // La hora del evento (puede venir de una cola offline) no puede ser futura ni tener más de 24 h.
-    function horaRazonable(t) {
+    // The event time (may come from an offline queue) can neither be in the future nor older than 24 h.
+    function reasonableTime(t) {
       return t is timestamp &&
         t <= request.time + duration.value(5, 'm') &&
         t >= request.time - duration.value(24, 'h');
     }
 
-    // ---------------------------------------------------------------- usuarios
-    // Perfil y rol. Lo crea el administrador (el primer ADMIN se crea a mano en la consola).
-    match /usuarios/{uid} {
-      allow read: if autenticado() && (request.auth.uid == uid || esAdmin());
-      allow create, update, delete: if esAdmin();
+    // ---------------------------------------------------------------- users
+    // Profile and role. Created by the administrator (the first ADMIN is created by hand in the console;
+    // later users are created by the `create-user` Edge Function).
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update, delete: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- planteles
-    // Geocerca (centro: GeoPoint, radioMetros, toleranciaMetros, toleranciaMinutos) y BSSIDs.
-    match /planteles/{plantelId} {
-      allow read: if autenticado() && (esAdmin() || mismoPlantel(plantelId));
-      allow write: if esAdmin();
+    // ---------------------------------------------------------------- config
+    // Single campus: center (GeoPoint), radiusMeters, toleranceMeters, toleranceMinutes, timeZone, bssids[].
+    match /config/campus {
+      allow read: if isSignedIn() && profile().active == true;
+      allow write: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- dispositivos
-    // Vinculación del dispositivo (docId = installId generado por la app; no es la MAC).
-    match /dispositivos/{installId} {
+    // ---------------------------------------------------------------- devices
+    // Device linking (docId = installId generated by the app; it is not the MAC).
+    match /devices/{installId} {
       function dd() {
         return request.resource.data;
       }
 
-      allow read: if autenticado() && (resource.data.usuarioUid == request.auth.uid || esAdmin());
+      allow read: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
 
-      // La app solicita la vinculación: alumnos quedan PENDIENTE; el resto de roles, ACTIVO.
-      allow create: if autenticado()
-        && dd().keys().hasOnly(['usuarioUid', 'alumnoId', 'rol', 'estado', 'clavePublica', 'modelo', 'creadoEn'])
-        && dd().keys().hasAll(['usuarioUid', 'rol', 'estado', 'clavePublica', 'creadoEn'])
-        && dd().usuarioUid == request.auth.uid
-        && dd().rol == perfil().rol
-        && dd().estado == (perfil().rol == 'ALUMNO' ? 'PENDIENTE' : 'ACTIVO')
-        && (perfil().rol != 'ALUMNO' ||
-            (dd().alumnoId is string &&
-             get(/databases/$(database)/documents/alumnos/$(dd().alumnoId)).data.alumnoUid == request.auth.uid))
-        && dd().creadoEn == request.time;
+      // The app requests the link: students start PENDING; other roles start ACTIVE.
+      allow create: if isSignedIn()
+        && dd().keys().hasOnly(['userUid', 'studentId', 'role', 'status', 'model', 'fcmToken', 'createdAt'])
+        && dd().keys().hasAll(['userUid', 'role', 'status', 'createdAt'])
+        && dd().userUid == request.auth.uid
+        && dd().role == profile().role
+        && dd().status == (profile().role == 'STUDENT' ? 'PENDING' : 'ACTIVE')
+        && (profile().role != 'STUDENT' ||
+            (dd().studentId is string &&
+             get(/databases/$(database)/documents/students/$(dd().studentId)).data.studentUid == request.auth.uid))
+        && dd().createdAt == request.time;
 
-      // El administrador aprueba, revoca y asocia. (Los tokens FCM se registran en el backend.)
-      allow update: if esAdmin();
-      allow delete: if esAdmin();
+      // The owner can only refresh the FCM token; the administrator approves, revokes and links.
+      allow update: if (isSignedIn()
+          && resource.data.userUid == request.auth.uid
+          && onlyChanges(['fcmToken'])
+          && request.resource.data.fcmToken is string)
+        || isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- alumnos
-    // alumnoUid (nullable): cuenta del alumno; tutorUids: cuentas de sus tutores.
-    match /alumnos/{alumnoId} {
-      allow read: if autenticado() && (
-        resource.data.alumnoUid == request.auth.uid ||
-        request.auth.uid in resource.data.tutorUids ||
-        esAdmin());
-      allow write: if esAdmin();
-
-      // Secreto TOTP del QR. Quién lo verifica (escáner o backend) se decide en la etapa del QR.
-      match /secretos/{doc} {
-        allow read: if autenticado() &&
-          get(/databases/$(database)/documents/alumnos/$(alumnoId)).data.alumnoUid == request.auth.uid;
-        allow write: if esAdmin();
-      }
+    // ---------------------------------------------------------------- students
+    // studentUid (nullable): the student's account; guardianUids: their guardians' accounts.
+    match /students/{studentId} {
+      allow read: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        request.auth.uid in resource.data.guardianUids ||
+        isAdmin());
+      allow write: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- presencias
-    // Presencia diaria en el plantel. docId = {alumnoId}_{yyyy-MM-dd}  (una por alumno y día).
-    // PRESENTE se escribe desde el cliente. La ausencia vive en la colección `ausencias` (la escribe el backend).
-    match /presencias/{presenciaId} {
-      function datos() {
+    // ---------------------------------------------------------------- presences
+    // Daily presence at the campus. docId = {studentId}_{yyyy-MM-dd}  (one per student and day).
+    // PRESENT is written from the client. Absence lives in the `absences` collection (written by the backend).
+    match /presences/{presenceId} {
+      function pd() {
         return request.resource.data;
       }
 
-      function llaveOk() {
-        return presenciaId == datos().alumnoId + '_' + datos().fecha;
+      function keyOk() {
+        return presenceId == pd().studentId + '_' + pd().date;
       }
 
-      function camposPermitidos() {
-        return datos().keys().hasOnly(['alumnoId', 'alumnoUid', 'plantelId', 'fecha', 'estado', 'metodo',
-          'confianza', 'ubicacion', 'bssid', 'horaEntrada', 'horaSalida', 'relojConfiable', 'registradoPor',
-          'tutorUids', 'dispositivoId', 'clientUuid', 'creadoEn']);
+      function allowedFields() {
+        return pd().keys().hasOnly(['studentId', 'studentUid', 'date', 'status', 'method',
+          'confidence', 'location', 'bssid', 'entryTime', 'exitTime', 'trustedClock', 'registeredBy',
+          'guardianUids', 'deviceId', 'clientUuid', 'createdAt']);
       }
 
-      // El alumno registra su propia entrada con el dispositivo ACTIVO y dentro de la geocerca.
-      function creaAlumno() {
-        let a = get(/databases/$(database)/documents/alumnos/$(datos().alumnoId)).data;
-        let p = get(/databases/$(database)/documents/planteles/$(a.plantelId)).data;
-        let disp = get(/databases/$(database)/documents/dispositivos/$(datos().dispositivoId)).data;
-        return autenticado()
-          && datos().keys().hasAll(['alumnoId', 'alumnoUid', 'plantelId', 'fecha', 'estado', 'metodo',
-               'confianza', 'ubicacion', 'horaEntrada', 'relojConfiable', 'tutorUids', 'dispositivoId',
-               'clientUuid', 'creadoEn'])
-          && a.alumnoUid == request.auth.uid && a.activo == true
-          && datos().alumnoUid == request.auth.uid
-          && datos().plantelId == a.plantelId
-          && datos().tutorUids == a.tutorUids
-          && datos().estado == 'PRESENTE'
-          && (datos().metodo == 'GEOCERCA' || datos().metodo == 'GEOCERCA_WIFI')
-          && datos().confianza == (datos().metodo == 'GEOCERCA_WIFI' ? 1 : 0)
-          && datos().ubicacion is latlng
-          && datos().ubicacion.distance(p.centro) <= p.radioMetros + p.toleranciaMetros
-          && (datos().metodo == 'GEOCERCA' || (datos().bssid is string && datos().bssid in p.bssids))
-          && horaRazonable(datos().horaEntrada)
-          && datos().creadoEn == request.time
-          && disp.estado == 'ACTIVO'
-          && disp.alumnoId == datos().alumnoId
-          && disp.usuarioUid == request.auth.uid;
+      // The student registers their own entry with an ACTIVE device and inside the geofence.
+      function createdByStudent() {
+        let s = get(/databases/$(database)/documents/students/$(pd().studentId)).data;
+        let c = get(/databases/$(database)/documents/config/campus).data;
+        let dev = get(/databases/$(database)/documents/devices/$(pd().deviceId)).data;
+        return isSignedIn()
+          && pd().keys().hasAll(['studentId', 'studentUid', 'date', 'status', 'method',
+               'confidence', 'location', 'entryTime', 'trustedClock', 'guardianUids', 'deviceId',
+               'clientUuid', 'createdAt'])
+          && s.studentUid == request.auth.uid && s.active == true
+          && pd().studentUid == request.auth.uid
+          && pd().guardianUids == s.guardianUids
+          && pd().status == 'PRESENT'
+          && (pd().method == 'GEOFENCE' || pd().method == 'GEOFENCE_WIFI')
+          && pd().confidence == (pd().method == 'GEOFENCE_WIFI' ? 1 : 0)
+          && pd().location is latlng
+          && pd().location.distance(c.center) <= c.radiusMeters + c.toleranceMeters
+          && (pd().method == 'GEOFENCE' || (pd().bssid is string && pd().bssid in c.bssids))
+          && reasonableTime(pd().entryTime)
+          && pd().createdAt == request.time
+          && dev.status == 'ACTIVE'
+          && dev.studentId == pd().studentId
+          && dev.userUid == request.auth.uid;
       }
 
-      // El administrador registra a un alumno sin teléfono escaneando su credencial QR.
-      function creaAdmin() {
-        let a = get(/databases/$(database)/documents/alumnos/$(datos().alumnoId)).data;
-        return esAdmin()
-          && datos().keys().hasAll(['alumnoId', 'alumnoUid', 'plantelId', 'fecha', 'estado', 'metodo',
-               'confianza', 'horaEntrada', 'relojConfiable', 'tutorUids', 'registradoPor', 'clientUuid', 'creadoEn'])
-          && datos().alumnoUid == a.alumnoUid
-          && datos().plantelId == a.plantelId
-          && datos().tutorUids == a.tutorUids
-          && datos().estado == 'PRESENTE'
-          && datos().metodo == 'QR_ADMIN'
-          && datos().confianza == 1
-          && datos().registradoPor == request.auth.uid
-          && horaRazonable(datos().horaEntrada)
-          && datos().creadoEn == request.time;
+      // The administrator registers a student without a phone by searching them manually (RF-P01).
+      function createdByAdmin() {
+        let s = get(/databases/$(database)/documents/students/$(pd().studentId)).data;
+        return isAdmin()
+          && pd().keys().hasAll(['studentId', 'studentUid', 'date', 'status', 'method',
+               'confidence', 'entryTime', 'trustedClock', 'guardianUids', 'registeredBy', 'clientUuid', 'createdAt'])
+          && pd().studentUid == s.studentUid
+          && pd().guardianUids == s.guardianUids
+          && pd().status == 'PRESENT'
+          && pd().method == 'ADMIN_MANUAL'
+          && pd().confidence == 1
+          && pd().registeredBy == request.auth.uid
+          && reasonableTime(pd().entryTime)
+          && pd().createdAt == request.time;
       }
 
-      allow read: if autenticado() && (
-        resource.data.alumnoUid == request.auth.uid ||
-        request.auth.uid in resource.data.tutorUids ||
-        esAdmin());
+      allow read: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        request.auth.uid in resource.data.guardianUids ||
+        isAdmin());
 
-      // Se evalúa solo la rama que corresponde al método (evita errores por campos ausentes en la otra).
-      allow create: if (camposPermitidos() && llaveOk() &&
-          ((datos().metodo == 'QR_ADMIN' && creaAdmin()) ||
-           (datos().metodo != 'QR_ADMIN' && creaAlumno())))
-        || esAdmin();
+      // Only the branch matching the method is evaluated (avoids errors from fields missing in the other one).
+      allow create: if (allowedFields() && keyOk() &&
+          ((pd().method == 'ADMIN_MANUAL' && createdByAdmin()) ||
+           (pd().method != 'ADMIN_MANUAL' && createdByStudent())))
+        || isAdmin();
 
-      // El alumno solo registra su salida (puede actualizarla, pero nunca hacia atrás).
-      allow update: if (autenticado()
-          && resource.data.alumnoUid == request.auth.uid
-          && soloCambia(['horaSalida'])
-          && horaRazonable(request.resource.data.horaSalida)
-          && request.resource.data.horaSalida >
-               resource.data.get('horaSalida', resource.data.horaEntrada))
-        || esAdmin();
+      // The student only registers their exit (can update it, but never backwards).
+      allow update: if (isSignedIn()
+          && resource.data.studentUid == request.auth.uid
+          && onlyChanges(['exitTime'])
+          && reasonableTime(request.resource.data.exitTime)
+          && request.resource.data.exitTime >
+               resource.data.get('exitTime', resource.data.entryTime))
+        || isAdmin();
 
-      allow delete: if esAdmin();
+      allow delete: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- ausencias
-    // Las escribe el backend al vencer la tolerancia (docId = {alumnoId}_{yyyy-MM-dd}) y las borra si el
-    // alumno registra su entrada después. Los clientes solo leen.
-    match /ausencias/{ausenciaId} {
-      allow read: if autenticado() &&
-        (request.auth.uid in resource.data.tutorUids || esAdmin());
+    // ---------------------------------------------------------------- absences
+    // Written by the backend when the tolerance expires (docId = {studentId}_{yyyy-MM-dd}) and deleted if the
+    // student registers their entry afterwards. Clients only read.
+    match /absences/{absenceId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid in resource.data.guardianUids || isAdmin());
       allow write: if false;
     }
 
-    // ---------------------------------------------------------------- justificantes
-    // La evidencia (foto o video) vive en Azure Blob; aquí solo la ruta: {tutorUid}/{clientUuid}.jpg|mp4
-    match /justificantes/{justificanteId} {
+    // ---------------------------------------------------------------- justifications
+    // The evidence (photo or video) lives in Supabase Storage (private bucket); here only the path:
+    // {guardianUid}/{clientUuid}.jpg|mp4
+    match /justifications/{justificationId} {
       function dj() {
         return request.resource.data;
       }
 
-      function creaTutor() {
-        let a = get(/databases/$(database)/documents/alumnos/$(dj().alumnoId)).data;
-        return autenticado()
-          && dj().keys().hasOnly(['alumnoId', 'plantelId', 'tutorUid', 'tipo', 'fechaInicio', 'fechaFin',
-               'motivo', 'evidenciaBlobPath', 'evidenciaTipo', 'estado', 'clientUuid', 'creadoEn'])
-          && dj().keys().hasAll(['alumnoId', 'plantelId', 'tutorUid', 'tipo', 'fechaInicio', 'fechaFin',
-               'motivo', 'estado', 'clientUuid', 'creadoEn'])
-          && request.auth.uid in a.tutorUids
-          && dj().tutorUid == request.auth.uid
-          && dj().plantelId == a.plantelId
-          && dj().tipo in ['RECADO', 'CONSTANCIA_MEDICA']
-          && dj().estado == 'PENDIENTE'
-          && dj().motivo is string && dj().motivo.size() > 0 && dj().motivo.size() <= 500
-          && dj().creadoEn == request.time
-          && (!('evidenciaBlobPath' in dj()) ||
-              (dj().evidenciaBlobPath is string &&
-               dj().evidenciaBlobPath.matches('^' + request.auth.uid + '/[A-Za-z0-9._-]+$')));
+      function createdByGuardian() {
+        let s = get(/databases/$(database)/documents/students/$(dj().studentId)).data;
+        return isSignedIn()
+          && dj().keys().hasOnly(['studentId', 'guardianUid', 'type', 'startDate', 'endDate',
+               'reason', 'evidencePath', 'evidenceType', 'status', 'clientUuid', 'createdAt'])
+          && dj().keys().hasAll(['studentId', 'guardianUid', 'type', 'startDate', 'endDate',
+               'reason', 'status', 'clientUuid', 'createdAt'])
+          && request.auth.uid in s.guardianUids
+          && dj().guardianUid == request.auth.uid
+          && dj().type in ['NOTE', 'MEDICAL_CERTIFICATE']
+          && dj().status == 'PENDING'
+          && dj().reason is string && dj().reason.size() > 0 && dj().reason.size() <= 500
+          && dj().createdAt == request.time
+          && (!('evidencePath' in dj()) ||
+              (dj().evidencePath is string &&
+               dj().evidencePath.matches('^' + request.auth.uid + '/[A-Za-z0-9._-]+$')));
       }
 
-      allow read: if autenticado() &&
-        (resource.data.tutorUid == request.auth.uid || esAdmin());
+      allow read: if isSignedIn() &&
+        (resource.data.guardianUid == request.auth.uid || isAdmin());
 
-      allow create: if creaTutor();
+      allow create: if createdByGuardian();
 
-      // El administrador acepta o rechaza (RF-P04).
-      allow update: if esAdmin()
-        && soloCambia(['estado', 'comentarioRevision', 'revisadoPor', 'revisadoEn'])
-        && request.resource.data.estado in ['ACEPTADO', 'RECHAZADO']
-        && request.resource.data.revisadoPor == request.auth.uid
-        && request.resource.data.revisadoEn == request.time;
+      // The administrator accepts or rejects (RF-P04).
+      allow update: if isAdmin()
+        && onlyChanges(['status', 'reviewComment', 'reviewedBy', 'reviewedAt'])
+        && request.resource.data.status in ['ACCEPTED', 'REJECTED']
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reviewedAt == request.time;
     }
 
-    // ---------------------------------------------------------------- módulo académico
-    // Grupos: incluye profesorUids y la lista de alumnos {id, nombre, matricula} que mantiene el ADMIN
-    // (así el profesor obtiene su lista con una sola lectura).
-    match /grupos/{grupoId} {
-      allow read: if autenticado() &&
-        (esAdmin() || request.auth.uid in resource.data.profesorUids);
-      allow write: if esAdmin();
+    // ---------------------------------------------------------------- academic module
+    // Groups: include teacherUids and the student list {id, name, studentNumber} maintained by ADMIN
+    // (so the teacher gets their roster with a single read).
+    match /groups/{groupId} {
+      allow read: if isSignedIn() &&
+        (isAdmin() || request.auth.uid in resource.data.teacherUids);
+      allow write: if isAdmin();
     }
 
-    match /materias/{materiaId} {
-      allow read: if autenticado();
-      allow write: if esAdmin();
+    match /subjects/{subjectId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    // Asignación grupo-materia-profesor.
-    match /asignaciones/{asignacionId} {
-      allow read: if autenticado() &&
-        (resource.data.profesorUid == request.auth.uid || esAdmin());
-      allow write: if esAdmin();
+    // Group-subject-teacher assignment.
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn() &&
+        (resource.data.teacherUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // Horarios por materia (RF-AD01): diaSemana 1-7, horaInicio/horaFin "HH:mm", aula.
-    match /horarios/{horarioId} {
-      allow read: if autenticado() &&
-        (resource.data.profesorUid == request.auth.uid || esAdmin());
-      allow write: if esAdmin();
+    // Schedules per subject (RF-AD01): weekday 1-7, startTime/endTime "HH:mm", room.
+    match /schedules/{scheduleId} {
+      allow read: if isSignedIn() &&
+        (resource.data.teacherUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // Sesión de clase y pase de lista. docId = {horarioId}_{yyyy-MM-dd}.
-    // lista: { alumnoId: { estado: 'ASISTIO'|'NO_ASISTIO', justificada: bool } }  (una escritura por lista)
-    match /sesiones/{sesionId} {
+    // Class session and roll call. docId = {scheduleId}_{yyyy-MM-dd}.
+    // roster: { studentId: { status: 'ATTENDED'|'NOT_ATTENDED', justified: bool } }  (one write per roll call)
+    match /class_sessions/{classSessionId} {
       function ds() {
         return request.resource.data;
       }
 
-      function creaProfesor() {
-        let h = get(/databases/$(database)/documents/horarios/$(ds().horarioId)).data;
-        return autenticado()
-          && ds().keys().hasOnly(['horarioId', 'asignacionId', 'grupoId', 'plantelId', 'profesorUid', 'fecha',
-               'materiaNombre', 'grupoNombre', 'horaInicio', 'horaFin', 'estado', 'lista', 'creadoEn', 'actualizadoEn'])
-          && ds().keys().hasAll(['horarioId', 'asignacionId', 'grupoId', 'plantelId', 'profesorUid', 'fecha',
-               'estado', 'lista', 'creadoEn'])
-          && sesionId == ds().horarioId + '_' + ds().fecha
-          && h.profesorUid == request.auth.uid
-          && ds().profesorUid == request.auth.uid
-          && ds().plantelId == h.plantelId
-          && ds().grupoId == h.grupoId
-          && ds().asignacionId == h.asignacionId
-          && ds().estado in ['ABIERTA', 'CERRADA']
-          && ds().lista is map && ds().lista.size() <= 80
-          && ds().creadoEn == request.time;
+      function createdByTeacher() {
+        let h = get(/databases/$(database)/documents/schedules/$(ds().scheduleId)).data;
+        return isSignedIn()
+          && ds().keys().hasOnly(['scheduleId', 'assignmentId', 'groupId', 'teacherUid', 'date',
+               'subjectName', 'groupName', 'startTime', 'endTime', 'status', 'roster', 'createdAt', 'updatedAt'])
+          && ds().keys().hasAll(['scheduleId', 'assignmentId', 'groupId', 'teacherUid', 'date',
+               'status', 'roster', 'createdAt'])
+          && classSessionId == ds().scheduleId + '_' + ds().date
+          && h.teacherUid == request.auth.uid
+          && ds().teacherUid == request.auth.uid
+          && ds().groupId == h.groupId
+          && ds().assignmentId == h.assignmentId
+          && ds().status in ['OPEN', 'CLOSED']
+          && ds().roster is map && ds().roster.size() <= 80
+          && ds().createdAt == request.time;
       }
 
-      allow read: if autenticado() &&
-        (resource.data.profesorUid == request.auth.uid || esAdmin());
+      allow read: if isSignedIn() &&
+        (resource.data.teacherUid == request.auth.uid || isAdmin());
 
-      allow create: if creaProfesor() || esAdmin();
+      allow create: if createdByTeacher() || isAdmin();
 
-      // El profesor corrige mientras la sesión esté ABIERTA; después solo el ADMIN.
-      allow update: if (autenticado()
-          && resource.data.profesorUid == request.auth.uid
-          && resource.data.estado == 'ABIERTA'
-          && soloCambia(['lista', 'estado', 'actualizadoEn'])
-          && request.resource.data.lista is map && request.resource.data.lista.size() <= 80
-          && request.resource.data.actualizadoEn == request.time)
-        || esAdmin();
+      // The teacher corrects while the session is OPEN; afterwards only ADMIN.
+      allow update: if (isSignedIn()
+          && resource.data.teacherUid == request.auth.uid
+          && resource.data.status == 'OPEN'
+          && onlyChanges(['roster', 'status', 'updatedAt'])
+          && request.resource.data.roster is map && request.resource.data.roster.size() <= 80
+          && request.resource.data.updatedAt == request.time)
+        || isAdmin();
 
-      allow delete: if esAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Calificaciones importadas de otro sistema (solo lectura para la app). docId = {asignacionId}_{alumnoId}
-    match /calificaciones/{calificacionId} {
-      allow read: if autenticado() && (resource.data.profesorUid == request.auth.uid || esAdmin());
-      allow write: if esAdmin();
+    // Grades imported from another system (read-only for the app). docId = {assignmentId}_{studentId}
+    match /grades/{gradeId} {
+      allow read: if isSignedIn() && (resource.data.teacherUid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // ---------------------------------------------------------------- emergencias (RF-PF04)
-    match /emergencias/{emergenciaId} {
+    // ---------------------------------------------------------------- emergencies (RF-PF04)
+    match /emergencies/{emergencyId} {
       function de() {
         return request.resource.data;
       }
 
-      allow read: if autenticado() && (resource.data.profesorUid == request.auth.uid || esAdmin());
+      allow read: if isSignedIn() && (resource.data.teacherUid == request.auth.uid || isAdmin());
 
-      allow create: if esRol('PROFESOR')
-        && de().keys().hasOnly(['profesorUid', 'plantelId', 'sesionId', 'mensaje', 'estado', 'creadoEn'])
-        && de().keys().hasAll(['profesorUid', 'plantelId', 'mensaje', 'estado', 'creadoEn'])
-        && de().profesorUid == request.auth.uid
-        && de().plantelId == perfil().plantelId
-        && de().estado == 'ABIERTA'
-        && de().mensaje is string && de().mensaje.size() > 0 && de().mensaje.size() <= 500
-        && de().creadoEn == request.time;
+      allow create: if hasRole('TEACHER')
+        && de().keys().hasOnly(['teacherUid', 'classSessionId', 'message', 'status', 'createdAt'])
+        && de().keys().hasAll(['teacherUid', 'message', 'status', 'createdAt'])
+        && de().teacherUid == request.auth.uid
+        && de().status == 'OPEN'
+        && de().message is string && de().message.size() > 0 && de().message.size() <= 500
+        && de().createdAt == request.time;
 
-      allow update: if esAdmin()
-        && soloCambia(['estado', 'atendidaPor', 'atendidaEn'])
-        && request.resource.data.estado == 'ATENDIDA'
-        && request.resource.data.atendidaPor == request.auth.uid
-        && request.resource.data.atendidaEn == request.time;
+      allow update: if isAdmin()
+        && onlyChanges(['status', 'attendedBy', 'attendedAt'])
+        && request.resource.data.status == 'ATTENDED'
+        && request.resource.data.attendedBy == request.auth.uid
+        && request.resource.data.attendedAt == request.time;
     }
 
-    // ---------------------------------------------------------------- notificaciones
-    // Bandeja dentro de la app. Solo las escribe el backend (Admin SDK ignora estas reglas).
-    match /notificaciones/{notificacionId} {
-      allow read: if autenticado() && resource.data.destinatarioUid == request.auth.uid;
-      allow update: if autenticado() && resource.data.destinatarioUid == request.auth.uid && soloCambia(['leida']);
+    // ---------------------------------------------------------------- notifications
+    // In-app inbox. Only the backend writes (the Admin SDK ignores these rules).
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.recipientUid == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.recipientUid == request.auth.uid && onlyChanges(['read']);
       allow create, delete: if false;
     }
 
-    // Todo lo demás permanece cerrado.
+    // Everything else stays closed.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,90 +1,79 @@
-# EduCheck · Modelo de datos de Firestore y reglas (etapa 1)
+# EduCheck · Firestore data model and rules (v1.4)
 
-Fuente de verdad: Firestore (plan Spark). Este modelo se diseñó para **cuota gratuita** (50 000 lecturas y
-20 000 escrituras al día) y para funcionar **sin backend** en esta etapa. Lo que sí necesita backend
-(Admin SDK en Azure) está marcado en la sección 6.
+Source of truth: Firestore (Spark plan). Designed for the **free quota** (50,000 reads and 20,000 writes per day).
+Server-side work (cron, FCM push, signed URLs, custom claims) runs in **Supabase Edge Functions** (section 6).
+Identifiers (collections, fields, enum values) are in English; the UI is in Spanish.
 
-## 1. Principios de diseño
-1. **Identificadores deterministas** (`{alumnoId}_{fecha}`, `{horarioId}_{fecha}`): garantizan una sola presencia por alumno y día y una sola sesión por horario y día, sin transacciones.
-2. **Una escritura por acción**: el pase de lista guarda *toda* la lista en un solo documento (mapa), no un documento por alumno.
-3. **Desnormalizar para las reglas**: `tutorUids` se copia a cada presencia, y `profesorUids` + lista de alumnos viven en `grupos`. Las reglas de consulta no pueden “seguir” relaciones, así que cada lector necesita un campo contra el cual validar.
-4. **Las reglas validan lo que importa**: dentro de la geocerca (`latlng.distance`), dispositivo `ACTIVO`, hora razonable, estructura y propiedad. Los clientes no escriben `AUSENTE`, avisos ni calificaciones.
-5. **Contadores sin escrituras extra**: el dashboard usa consultas `count()` (se cobra 1 lectura por cada 1 000 documentos).
+## 1. Design principles
+1. **Deterministic ids** (`{studentId}_{date}`, `{scheduleId}_{date}`): one presence per student and day and one class session per schedule and day, without transactions.
+2. **One write per action**: roll call stores the *whole* list in one document (map), not one document per student.
+3. **Denormalize for rules**: `guardianUids` is copied to every presence, and `teacherUids` plus the student list live in `groups`. Query rules cannot follow relations, so each reader needs a field to validate against.
+4. **Rules validate what matters**: inside the geofence (`latlng.distance`), `ACTIVE` device, reasonable time, structure and ownership. Clients never write `ABSENT`, notices or grades.
+5. **Counters without extra writes**: the dashboard uses `count()` queries (1 read per 1,000 documents).
+6. **Single campus**: geofence, BSSIDs and tolerances live in one document, `config/campus`. There is no `campusId` anywhere.
 
-## 2. Mapa de colecciones
-| Colección | docId | Contenido principal | Escribe | Lee |
+## 2. Collection map
+| Collection | docId | Main content | Writes | Reads |
 |---|---|---|---|---|
-| `usuarios` | uid de Auth | `nombre`, `email`, `rol`, `plantelId`, `activo`, `alumnoId?` | ADMIN | el usuario; ADMIN |
-| `planteles` | id | `nombre`, `centro` (GeoPoint), `radioMetros`, `toleranciaMetros` (100), `toleranciaMinutos` (60), `zonaHoraria`, `bssids[]`, `activo` | ADMIN | usuarios del plantel |
-| `dispositivos` | `installId` (UUID de la app) | `usuarioUid`, `alumnoId?`, `rol`, `estado` (PENDIENTE/ACTIVO/REVOCADO), `clavePublica`, `modelo`, `fcmToken`, `creadoEn` | la app (alta y token); ADMIN (estado) | dueño; ADMIN |
-| `alumnos` | id | `matricula`, `nombres`, `apellidos`, `plantelId`, `grupoId`, `alumnoUid` (nullable), `tutorUids[]`, `activo` | ADMIN | alumno, tutores, staff del plantel |
-| `alumnos/{id}/secretos/totp` | `totp` | secreto del QR | ADMIN | el alumno (decisión del QR pendiente) |
-| `presencias` | `{alumnoId}_{yyyy-MM-dd}` | `alumnoId`, `alumnoUid`, `plantelId`, `fecha`, `estado`, `metodo`, `confianza`, `ubicacion`, `bssid?`, `horaEntrada`, `horaSalida?`, `relojConfiable`, `registradoPor?`, `tutorUids[]`, `dispositivoId`, `clientUuid`, `creadoEn` | alumno (entrada y salida), prefecto (QR), ADMIN | alumno, tutores, staff |
-| `justificantes` | id | `alumnoId`, `plantelId`, `tutorUid`, `tipo`, `fechaInicio`, `fechaFin`, `motivo`, `evidenciaBlobPath?`, `evidenciaTipo?`, `estado`, `comentarioRevision?`, `revisadoPor?`, `revisadoEn?`, `clientUuid`, `creadoEn` | tutor (alta); staff (resolución) | tutor, staff |
-| `grupos` | id | `plantelId`, `nombre`, `semestre`, `turno`, `periodo`, `profesorUids[]`, `alumnos[{id,nombre,matricula}]` | ADMIN | profesores del grupo, staff |
-| `materias` | id | `clave`, `nombre` | ADMIN | cualquier usuario |
-| `asignaciones` | id | `grupoId`, `materiaId`, `materiaNombre`, `grupoNombre`, `profesorUid`, `plantelId` | ADMIN | su profesor, staff |
-| `horarios` | id | `asignacionId`, `grupoId`, `plantelId`, `profesorUid`, `materiaNombre`, `grupoNombre`, `diaSemana` (1–7), `horaInicio`, `horaFin`, `aula` | ADMIN | su profesor, staff |
-| `sesiones` | `{horarioId}_{yyyy-MM-dd}` | `horarioId`, `asignacionId`, `grupoId`, `plantelId`, `profesorUid`, `fecha`, `materiaNombre`, `grupoNombre`, `horaInicio`, `horaFin`, `estado` (ABIERTA/CERRADA), `lista{alumnoId:{estado,justificada}}` | profesor (mientras ABIERTA); ADMIN | su profesor, staff |
-| `calificaciones` | `{asignacionId}_{alumnoId}` | `plantelId`, `asignacionId`, `alumnoId`, `profesorUid`, `parciales{1,2,3}`, `importadoEn` | ADMIN (importación) | su profesor, ADMIN |
-| `emergencias` | id | `profesorUid`, `plantelId`, `sesionId?`, `mensaje`, `estado` (ABIERTA/ATENDIDA), `creadoEn`, `atendidaPor?`, `atendidaEn?` | profesor (alta); ADMIN (atender) | autor, ADMIN |
-| `notificaciones` | id | `destinatarioUid`, `tipo`, `titulo`, `cuerpo`, `alumnoId?`, `creadoEn`, `leida` | **solo backend** | destinatario (puede marcar `leida`) |
+| `config/campus` | `campus` | `name`, `center` (GeoPoint), `radiusMeters`, `toleranceMeters` (100), `toleranceMinutes` (60), `timeZone`, `bssids[]` | ADMIN | any signed-in user |
+| `users` | Auth uid | `name`, `email`, `role` (STUDENT/GUARDIAN/TEACHER/ADMIN), `active`, `studentId?` | ADMIN | the user; ADMIN |
+| `devices` | `installId` (app UUID) | `userUid`, `studentId?`, `role`, `status` (PENDING/ACTIVE/REVOKED), `model`, `fcmToken`, `createdAt` | the app (registration and token); ADMIN (status) | owner; ADMIN |
+| `students` | id | `studentNumber`, `firstNames`, `lastNames`, `groupId`, `studentUid` (nullable), `guardianUids[]`, `active` | ADMIN | student, guardians, ADMIN |
+| `presences` | `{studentId}_{yyyy-MM-dd}` | `studentId`, `studentUid`, `date`, `status`, `method`, `confidence`, `location`, `bssid?`, `entryTime`, `exitTime?`, `trustedClock`, `registeredBy?`, `guardianUids[]`, `deviceId`, `clientUuid`, `createdAt` | student (entry and exit); ADMIN (manual) | student, guardians, ADMIN |
+| `absences` | `{studentId}_{date}` | closing-window result written by the backend | **backend only** | guardians, ADMIN |
+| `justifications` | id | `studentId`, `guardianUid`, `type`, `startDate`, `endDate`, `reason`, `evidencePath?`, `evidenceType?`, `status`, `reviewComment?`, `reviewedBy?`, `reviewedAt?`, `clientUuid`, `createdAt` | guardian (create); ADMIN (resolve) | guardian, ADMIN |
+| `groups` | id | `name`, `semester`, `shift`, `period`, `teacherUids[]`, `students[{id,name,studentNumber}]` | ADMIN | group teachers, ADMIN |
+| `subjects` | id | `code`, `name` | ADMIN | any signed-in user |
+| `assignments` | id | `groupId`, `subjectId`, `subjectName`, `groupName`, `teacherUid` | ADMIN | its teacher, ADMIN |
+| `schedules` | id | `assignmentId`, `groupId`, `teacherUid`, `subjectName`, `groupName`, `weekday` (1–7), `startTime`, `endTime`, `room` | ADMIN | its teacher, ADMIN |
+| `class_sessions` | `{scheduleId}_{yyyy-MM-dd}` | `scheduleId`, `assignmentId`, `groupId`, `teacherUid`, `date`, `subjectName`, `groupName`, `startTime`, `endTime`, `status` (OPEN/CLOSED), `roster{studentId:{status,justified}}` | teacher (while OPEN); ADMIN | its teacher, ADMIN |
+| `grades` | `{assignmentId}_{studentId}` | `assignmentId`, `studentId`, `teacherUid`, `partials{1,2,3}`, `importedAt` | ADMIN (CSV import) | its teacher, ADMIN |
+| `emergencies` | id | `teacherUid`, `classSessionId?`, `message`, `status` (OPEN/ATTENDED), `createdAt`, `attendedBy?`, `attendedAt?` | teacher (create); ADMIN (attend) | author, ADMIN |
+| `notifications` | id | `recipientUid`, `type`, `title`, `body`, `studentId?`, `createdAt`, `read` | **backend only** | recipient (may mark `read`) |
 
-`ADMIN` cumple también la función de **coordinador académico**. `staff` = ADMIN o PREFECTO del plantel.
+Values: presence `status` = PENDING / PRESENT / ABSENT; presence `method` = GEOFENCE / GEOFENCE_WIFI / ADMIN_MANUAL; roster `status` = ATTENDED / NOT_ATTENDED with `justified` flag. ADMIN is also the academic coordinator and covers the prefecture duties.
 
-## 3. Reglas relevantes (`firestore.rules`)
-- **Rol:** se lee de `usuarios/{uid}` con `get()`. Cada evaluación cuesta una lectura; más adelante puede pasarse a *custom claims*.
-- **Presencia del alumno (create):** campos permitidos y requeridos; `alumnoUid == request.auth.uid`; `plantelId` y `tutorUids` iguales a los del alumno; `estado == 'PRESENTE'`; `metodo` ∈ {`GEOCERCA`, `GEOCERCA_WIFI`}; `confianza` coherente con el método; `ubicacion.distance(plantel.centro) <= radioMetros + toleranciaMetros`; con Wi-Fi, el `bssid` debe estar en `plantel.bssids`; `horaEntrada` no futura ni mayor a 24 h (para soportar la cola offline); `creadoEn == request.time`; y el dispositivo debe existir, estar `ACTIVO` y ser del alumno. Usa 3 llamadas `get()` (límite: 10).
-- **Presencia por QR (create):** solo prefecto del plantel o ADMIN, `metodo == 'QR_PREFECTURA'`, `registradoPor == uid`.
-- **Salida (update):** solo el alumno, solo `horaSalida`, nunca hacia atrás.
-- **Pase de lista:** el profesor crea `sesiones/{horarioId}_{fecha}` solo si el horario es suyo; puede corregir mientras esté `ABIERTA`; después, solo ADMIN.
-- **Justificantes:** el tutor del alumno crea con `estado == 'PENDIENTE'` y una ruta de evidencia que empieza con su uid; staff resuelve (`ACEPTADO`/`RECHAZADO`) y deja su uid y la hora del servidor.
-- **Dispositivos:** el alumno solicita con `estado == 'PENDIENTE'`; los demás roles quedan `ACTIVO`. El dueño solo cambia `fcmToken`; el ADMIN aprueba o revoca.
-- **Todo lo no listado** queda cerrado.
+## 3. Relevant rules (`firestore.rules`)
+- **Role:** from the custom claim `request.auth.token.role`, set by the `set-role` Edge Function (RF-B07). It costs no Firestore read. A user without the claim is denied everywhere. The `users/{uid}.role` field mirrors the claim for display and is kept in sync by `set-role`. To deactivate an account, disable it in Firebase Auth (`create-user`/admin tools, Sprint 2); `students.active` is still checked by the presence rule.
+- **Student presence (create):** allowed and required fields; `studentUid == request.auth.uid`; `guardianUids` equal to the student's; `status == 'PRESENT'`; `method` in {`GEOFENCE`, `GEOFENCE_WIFI`}; `confidence` consistent with the method; `location.distance(config/campus.center) <= radiusMeters + toleranceMeters`; with Wi-Fi, `bssid` must be in `config/campus.bssids`; `entryTime` not in the future nor older than 24 h (to support the offline queue); `createdAt == request.time`; and the device must exist, be `ACTIVE` and belong to the student. Uses 3 `get()` calls (limit: 10).
+- **Manual presence (create):** ADMIN only, `method == 'ADMIN_MANUAL'`, `registeredBy == uid`.
+- **Exit (update):** student only, only `exitTime`, never backwards.
+- **Roll call:** the teacher creates `class_sessions/{scheduleId}_{date}` only if the schedule is theirs; can correct while `OPEN`; afterwards only ADMIN.
+- **Justifications:** the student's guardian creates with `status == 'PENDING'` and an evidence path that starts with their uid; ADMIN resolves (`ACCEPTED`/`REJECTED`) and leaves their uid and the server time.
+- **Devices:** the student requests with `status == 'PENDING'`; other roles are `ACTIVE`. The owner only changes `fcmToken`; ADMIN approves or revokes.
+- **Everything not listed** stays closed.
 
-## 4. Consultas por pantalla e índices (`firestore.indexes.json`)
-| Pantalla | Consulta | Índice |
+## 4. Queries per screen and indexes (`firestore.indexes.json`)
+| Screen | Query | Index |
 |---|---|---|
-| Tutor · tablero | `alumnos` con `tutorUids array-contains uid`; `presencias` con `tutorUids array-contains uid` y `fecha == hoy` | compuesto `presencias(tutorUids, fecha)` |
-| Tutor · historial | igual, con `fecha >= desde` | mismo índice |
-| Prefecto/Admin · dashboard | `count()` de `presencias` con `plantelId`, `fecha`, `estado` (igualdades) | no requiere |
-| Prefecto/Admin · en vivo | `presencias` con `plantelId`, `fecha == hoy`, ordenado por `horaEntrada` desc | `presencias(plantelId, fecha, horaEntrada)` |
-| Profesor · mi día | `horarios` con `profesorUid` y `diaSemana == hoy`, ordenado por `horaInicio`; `sesiones` con `profesorUid` y `fecha == hoy` | `horarios(profesorUid, diaSemana, horaInicio)` y `sesiones(profesorUid, fecha, horaInicio)` |
-| Profesor · lista | lectura de `grupos/{grupoId}` (lista de alumnos) | no requiere |
-| Admin · justificantes | `plantelId`, `estado == PENDIENTE`, orden por `creadoEn` desc | `justificantes(plantelId, estado, creadoEn)` |
-| Tutor · mis justificantes | `tutorUid`, orden por `creadoEn` desc | `justificantes(tutorUid, creadoEn)` |
-| Admin · emergencias | `plantelId`, `estado == ABIERTA`, orden por `creadoEn` desc | `emergencias(plantelId, estado, creadoEn)` |
+| Guardian · board | `students` with `guardianUids array-contains uid`; `presences` with `guardianUids array-contains uid` and `date == today` | composite `presences(guardianUids, date)` |
+| Guardian · history | same, with `date >= from` | same index |
+| Admin · dashboard | `count()` of `presences` with `date`, `status` (equalities) | none |
+| Admin · live | `presences` with `date == today`, ordered by `entryTime` desc | `presences(date, entryTime)` |
+| Teacher · my day | `schedules` with `teacherUid` and `weekday == today`, ordered by `startTime`; `class_sessions` with `teacherUid` and `date == today` | `schedules(teacherUid, weekday, startTime)` and `class_sessions(teacherUid, date, startTime)` |
+| Teacher · roll call | read `groups/{groupId}` (student list) | none |
+| Admin · justifications | `status == PENDING`, ordered by `createdAt` desc | `justifications(status, createdAt)` |
+| Guardian · my justifications | `guardianUid`, ordered by `createdAt` desc | `justifications(guardianUid, createdAt)` |
+| Admin · emergencies | `status == OPEN`, ordered by `createdAt` desc | `emergencies(status, createdAt)` |
 
-## 5. Presupuesto de cuota (estimación propia, orden de magnitud)
-Supuestos: 500 alumnos, 400 tutores, 15 grupos con 6 clases al día, 20 profesores.
-| Concepto | Escrituras/día | Lecturas/día |
+## 5. Quota
+Academic project with minimal test data: a few dozen reads per test session, far below the Spark limits. If it ever grew, the original estimate (500 students, 400 guardians, about 10,000 reads and 1,150 writes per day) stays valid in order of magnitude. Cares: a 3,000-document grade import uses 15 % of the daily writes, and heartbeats must **not** be written to Firestore.
+
+## 6. Server side: Supabase Edge Functions
+| Requirement | Function | Notes |
 |---|---|---|
-| Presencias (entrada y salida) | ≈ 1 000 | ≈ 1 500 (3 `get()` de reglas por entrada) |
-| Pase de lista (90 sesiones + correcciones) | ≈ 120 | ≈ 100 |
-| Justificantes, emergencias, dispositivos | ≈ 30 | ≈ 100 |
-| Tablero de tutores (4 aperturas al día) | — | ≈ 4 800 |
-| Actualizaciones en tiempo real a tutores | — | ≈ 1 300 |
-| Profesores (horarios, grupo, sesiones) | — | ≈ 600 |
-| Dashboard y escucha de prefectura | — | ≈ 1 500 |
-| **Total aproximado** | **≈ 1 150 (≈ 6 % de 20 000)** | **≈ 10 000 (≈ 20 % de 50 000)** |
+| RF-B01 window closing | `close-window` (cron every minute, pg_cron) | writes `absences`, changes PENDING to ABSENT, triggers push |
+| RF-T02, T03, B04, B05, PF04 push | `send-push` | FCM HTTP v1; Firebase service account stored as a Supabase secret; the client never sends push |
+| RF-B06 evidence | `signed-url` | validates the Firebase ID token and returns signed upload/download URLs; the bucket is private |
+| RF-B07 roles | `set-role` | sets the `role` custom claim through the Firebase Auth API |
+| RF-B05 loss of contact | `heartbeat` function + `last_seen` table in Supabase Postgres | decided: the app reports the last contact per student; Edge Functions are stateless, so it is stored in Supabase Postgres, never in Firestore. `close-window` reads it every minute |
+| RF-AD02 user creation | `create-user` | decided: the ADMIN app calls it; it validates the ADMIN claim, creates the Auth account through the Firebase Auth REST API with the service account, sets the role claim and writes `users/{uid}` |
 
-Cuidados: una importación de calificaciones de 3 000 documentos consume el 15 % de las escrituras del día; un *listener* que se reconecta tras más de 30 minutos sin conexión vuelve a leer su resultado; y los latidos **no** deben escribirse en Firestore (36 escrituras por alumno al día ≈ 18 000 con 500 alumnos).
-
-## 6. Lo que necesita backend (Admin SDK en Azure)
-| Requerimiento | Por qué no se puede solo con Firestore |
-|---|---|
-| RF-T02, RF-T03, RF-B04, RF-B05, RF-PF04 (push) | Spark no incluye Cloud Functions: algo debe enviar FCM al cambiar un documento. |
-| Escribir `AUSENTE` y evaluar tolerancias (RF-B01) | Necesita un temporizador. Mientras tanto, la app puede **calcular** «sin registro» localmente. |
-| Latidos y pérdida de contacto (RF-B05) | Escribirlos en Firestore agota la cuota; el backend los guarda en memoria. |
-| Enlaces SAS de Azure Blob (RF-T04) | Requiere la clave de la cuenta de almacenamiento. |
-| Verificación del TOTP del QR (RF-A03, P01) | Las reglas no calculan HMAC. |
-| Custom claims de rol (opcional) | Solo con Admin SDK. |
-
-## 7. Decisiones abiertas
-1. **Rol por documento o por claims.** Se empieza por documento (sin backend); migrar después es sencillo.
-2. **Ubicación validada en reglas.** Evita escrituras fuera del radio, pero no detecta una ubicación simulada; se complementa con `isMock`, el QR y el pase de lista.
-3. **Lista de alumnos del grupo** (`grupos.alumnos`) la mantiene el ADMIN junto con `alumnos.grupoId`; hay que actualizarlos en un solo *batch*.
-4. **Fecha de la sesión** no se valida contra el reloj del servidor (solo la hora de creación).
-5. **Quién verifica el TOTP:** escáner (necesitaría leer secretos) o backend.
-6. **Visibilidad para tutores y alumnos** de la asistencia por clase y de las calificaciones: hoy no tienen acceso.
-7. **Altas de usuarios desde la app del ADMIN** sin backend: crear la cuenta con una instancia secundaria de `FirebaseApp` y escribir el perfil en `usuarios`.
+## 7. Open decisions
+1. ~~Where to store heartbeats~~ **Decided:** Supabase Postgres `last_seen` table (see section 6). Schema and reporting interval are defined in Sprint 6.
+2. **Mock location:** rules validate the radius but cannot detect a simulated location; complement with `isMock` on the client and roll call.
+3. **Group student list** (`groups.students`) is maintained by ADMIN together with `students.groupId`; both must be updated in one batch.
+4. **Class session date** is not validated against the server clock (only the creation time).
+5. **Visibility for guardians and students** of per-class attendance and grades: they have no access today.
+6. ~~User creation from the ADMIN app~~ **Decided:** `create-user` Edge Function instead of a secondary `FirebaseApp` instance (see section 6).
+7. **`devices.publicKey`** existed for the QR flow and was removed; reconsider only if device attestation is needed.

@@ -1,11 +1,24 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     // Requiere app/google-services.json (descargado desde la consola de Firebase)
     alias(libs.plugins.google.services)
 }
+
+// Base URL of the Supabase Edge Functions. It lives in local.properties (never versioned):
+//   supabase.functions.url=https://<project-ref>.supabase.co/functions/v1/
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val supabaseFunctionsUrl: String = localProperties
+    .getProperty("supabase.functions.url", "https://example.supabase.co/functions/v1/")
+    .let { if (it.endsWith("/")) it else "$it/" }
 
 android {
     namespace = "com.jyhs.educheck"
@@ -21,6 +34,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPABASE_FUNCTIONS_URL", "\"$supabaseFunctionsUrl\"")
     }
 
     buildTypes {
@@ -67,6 +82,7 @@ dependencies {
     // Hilt (KSP, no kapt)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 
@@ -80,6 +96,14 @@ dependencies {
     // Coroutines (Task.await() de Firebase)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.androidx.compose.material.icons.core)
+
+    // Red: Retrofit + OkHttp + kotlinx.serialization (solo para las Edge Functions y las URLs firmadas)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
 
     // Firebase: Authentication, Firestore y Cloud Messaging
     implementation(platform(libs.firebase.bom))

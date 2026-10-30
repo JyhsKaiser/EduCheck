@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="action_back">Volver</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_approve">Aprobar</string>
+    <string name="action_reject">Rechazar</string>
+    <string name="action_revoke">Revocar</string>
+
+    <!-- Error messages for administration -->
+    <string name="error_email_exists">Ya existe una cuenta con ese correo.</string>
+    <string name="error_weak_password">La contraseña debe tener al menos 6 caracteres.</string>
+    <string name="error_invalid_input">Revisa los datos: hay campos vacíos o con formato inválido.</string>
+    <string name="error_forbidden">No tienes permiso para realizar esta acción.</string>
+    <string name="error_not_found">No se encontró el registro. Puede haber sido eliminado.</string>
+    <string name="error_already_linked">Ese alumno ya tiene una cuenta vinculada.</string>
+
+    <!-- Administration menu -->
+    <string name="admin_users_title">Usuarios</string>
+    <string name="admin_users_subtitle">Crear cuentas y activarlas o desactivarlas</string>
+    <string name="admin_students_title">Alumnos</string>
+    <string name="admin_students_subtitle">Altas de alumnos y vínculo con sus tutores</string>
+    <string name="admin_devices_title">Dispositivos</string>
+    <string name="admin_devices_subtitle">Aprobar o revocar los teléfonos de los alumnos</string>
+
+    <!-- Users -->
+    <string name="admin_user_new">Nuevo usuario</string>
+    <string name="admin_users_empty">Aún no hay usuarios.</string>
+    <string name="field_name">Nombre completo</string>
+    <string name="field_temp_password">Contraseña temporal</string>
+    <string name="field_temp_password_hint">Mínimo 6 caracteres. Entrégala al usuario.</string>
+    <string name="field_role">Rol</string>
+    <string name="field_link_student">Vincular con un alumno (opcional)</string>
+    <string name="option_no_link">Sin vincular</string>
+    <string name="action_create_user">Crear usuario</string>
+
+    <!-- Students -->
+    <string name="admin_student_new">Nuevo alumno</string>
+    <string name="admin_student_edit">Editar alumno</string>
+    <string name="admin_students_empty">Aún no hay alumnos.</string>
+    <string name="field_student_number">Matrícula</string>
+    <string name="field_first_names">Nombre(s)</string>
+    <string name="field_last_names">Apellidos</string>
+    <string name="field_guardians">Tutores</string>
+    <string name="guardians_none_available">No hay tutores activos. Crea primero sus cuentas en Usuarios.</string>
+    <string name="student_has_account">con cuenta</string>
+    <string name="student_no_account">sin cuenta</string>
+    <plurals name="guardians_count">
+        <item quantity="one">%d tutor</item>
+        <item quantity="other">%d tutores</item>
+    </plurals>
+
+    <!-- Devices -->
+    <string name="admin_devices_empty">Aún no hay dispositivos registrados.</string>
+    <string name="device_status_pending">Pendiente de aprobación</string>
+    <string name="device_status_active">Aprobado</string>
+    <string name="device_status_revoked">Revocado</string>
+</resources>

@@ -3,10 +3,9 @@ package com.jyhs.educheck.feature_login
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jyhs.educheck.R
-import com.jyhs.educheck.core.common.MotivoError
-import com.jyhs.educheck.core.common.Resultado
-import com.jyhs.educheck.domain.usecase.IniciarSesionUseCase
+import com.jyhs.educheck.core.common.AppResult
+import com.jyhs.educheck.core.ui.messageRes
+import com.jyhs.educheck.domain.usecase.SignInUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,42 +16,33 @@ import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
-    val clave: String = "",
-    val cargando: Boolean = false,
+    val password: String = "",
+    val loading: Boolean = false,
     @StringRes val errorRes: Int? = null,
 )
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val iniciarSesion: IniciarSesionUseCase,
+    private val signIn: SignInUseCase,
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(LoginUiState())
     val ui: StateFlow<LoginUiState> = _ui.asStateFlow()
 
-    fun onEmailChange(valor: String) = _ui.update { it.copy(email = valor, errorRes = null) }
+    fun onEmailChange(value: String) = _ui.update { it.copy(email = value, errorRes = null) }
 
-    fun onClaveChange(valor: String) = _ui.update { it.copy(clave = valor, errorRes = null) }
+    fun onPasswordChange(value: String) = _ui.update { it.copy(password = value, errorRes = null) }
 
-    fun enviar() {
-        val actual = _ui.value
-        if (actual.cargando) return
-        _ui.update { it.copy(cargando = true, errorRes = null) }
+    fun submit() {
+        val current = _ui.value
+        if (current.loading) return
+        _ui.update { it.copy(loading = true, errorRes = null) }
         viewModelScope.launch {
-            when (val resultado = iniciarSesion(actual.email, actual.clave)) {
-                // Al tener sesión, AppNavHost cambia de pantalla por sí solo.
-                is Resultado.Ok -> _ui.update { it.copy(cargando = false, clave = "") }
-                is Resultado.Error -> _ui.update { it.copy(cargando = false, errorRes = mensaje(resultado.motivo)) }
+            when (val result = signIn(current.email, current.password)) {
+                // Once there is a session, AppNavHost switches screens by itself.
+                is AppResult.Ok -> _ui.update { it.copy(loading = false, password = "") }
+                is AppResult.Error -> _ui.update { it.copy(loading = false, errorRes = result.reason.messageRes()) }
             }
         }
-    }
-
-    @StringRes
-    private fun mensaje(motivo: MotivoError): Int = when (motivo) {
-        MotivoError.SIN_RED -> R.string.error_sin_red
-        MotivoError.CREDENCIALES -> R.string.error_credenciales
-        MotivoError.SIN_PERFIL -> R.string.error_sin_perfil
-        MotivoError.CUENTA_INACTIVA -> R.string.error_cuenta_inactiva
-        MotivoError.DESCONOCIDO -> R.string.error_desconocido
     }
 }

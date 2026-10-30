@@ -39,9 +39,9 @@
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="ingresos" />
+            android:value="check_ins" />
 
-        <!-- WorkManager se inicializa desde EduCheckApp (Configuration.Provider + Hilt) -->
+        <!-- WorkManager is initialized from EduCheckApp (Configuration.Provider + Hilt) -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

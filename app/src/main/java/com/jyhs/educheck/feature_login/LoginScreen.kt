@@ -37,18 +37,18 @@ fun LoginScreen(vm: LoginViewModel = viewModel()) {
     LoginContent(
         ui = ui,
         onEmailChange = vm::onEmailChange,
-        onClaveChange = vm::onClaveChange,
-        onEnviar = vm::enviar,
+        onPasswordChange = vm::onPasswordChange,
+        onSubmit = vm::submit,
     )
 }
 
-/** Composable sin estado: recibe el estado y emite eventos (facilita pruebas y previews). */
+/** Stateless composable: receives state and emits events (eases tests and previews). */
 @Composable
 fun LoginContent(
     ui: LoginUiState,
     onEmailChange: (String) -> Unit,
-    onClaveChange: (String) -> Unit,
-    onEnviar: () -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSubmit: () -> Unit,
 ) {
     Scaffold { padding ->
         Column(
@@ -66,23 +66,23 @@ fun LoginContent(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = stringResource(R.string.login_titulo),
+                text = stringResource(R.string.login_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.height(24.dp))
             OutlinedTextField(
                 value = ui.email,
                 onValueChange = onEmailChange,
-                label = { Text(stringResource(R.string.login_correo)) },
+                label = { Text(stringResource(R.string.login_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
-                value = ui.clave,
-                onValueChange = onClaveChange,
-                label = { Text(stringResource(R.string.login_clave)) },
+                value = ui.password,
+                onValueChange = onPasswordChange,
+                label = { Text(stringResource(R.string.login_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
@@ -98,14 +98,14 @@ fun LoginContent(
             }
             Spacer(Modifier.height(24.dp))
             Button(
-                onClick = onEnviar,
-                enabled = !ui.cargando,
+                onClick = onSubmit,
+                enabled = !ui.loading,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (ui.cargando) {
+                if (ui.loading) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text(stringResource(R.string.login_entrar))
+                    Text(stringResource(R.string.login_submit))
                 }
             }
         }
@@ -117,10 +117,10 @@ fun LoginContent(
 private fun LoginPreview() {
     EduCheckTheme {
         LoginContent(
-            ui = LoginUiState(email = "profesor@escuela.mx"),
+            ui = LoginUiState(email = "teacher@school.mx"),
             onEmailChange = {},
-            onClaveChange = {},
-            onEnviar = {},
+            onPasswordChange = {},
+            onSubmit = {},
         )
     }
 }

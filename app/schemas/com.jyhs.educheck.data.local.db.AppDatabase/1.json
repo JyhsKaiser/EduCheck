@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b35d06aea431a7fc59791d63cec1bebd",
+    "identityHash": "131c67bd4a091d3dee8a6d6cf3e6f1d3",
     "entities": [
       {
-        "tableName": "asistencia_local",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`clientUuid` TEXT NOT NULL, `alumnoId` TEXT NOT NULL, `plantelId` TEXT NOT NULL, `fecha` TEXT NOT NULL, `eventoEpochMs` INTEGER NOT NULL, `elapsedRealtimeMs` INTEGER NOT NULL, `relojConfiable` INTEGER NOT NULL, `metodo` TEXT NOT NULL, `confianza` INTEGER NOT NULL, `latitud` REAL, `longitud` REAL, `precisionM` REAL, `bssid` TEXT, `syncStatus` TEXT NOT NULL, `intentos` INTEGER NOT NULL, `ultimoError` TEXT, `creadoEnMs` INTEGER NOT NULL, `sincronizadoEnMs` INTEGER, PRIMARY KEY(`clientUuid`))",
+        "tableName": "local_presence",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`clientUuid` TEXT NOT NULL, `studentId` TEXT NOT NULL, `date` TEXT NOT NULL, `eventEpochMs` INTEGER NOT NULL, `elapsedRealtimeMs` INTEGER NOT NULL, `trustedClock` INTEGER NOT NULL, `method` TEXT NOT NULL, `confidence` INTEGER NOT NULL, `latitude` REAL, `longitude` REAL, `accuracyM` REAL, `bssid` TEXT, `syncStatus` TEXT NOT NULL, `attempts` INTEGER NOT NULL, `lastError` TEXT, `createdAtMs` INTEGER NOT NULL, `syncedAtMs` INTEGER, PRIMARY KEY(`clientUuid`))",
         "fields": [
           {
             "fieldPath": "clientUuid",
@@ -15,26 +15,20 @@
             "notNull": true
           },
           {
-            "fieldPath": "alumnoId",
-            "columnName": "alumnoId",
+            "fieldPath": "studentId",
+            "columnName": "studentId",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "plantelId",
-            "columnName": "plantelId",
+            "fieldPath": "date",
+            "columnName": "date",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "fecha",
-            "columnName": "fecha",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "eventoEpochMs",
-            "columnName": "eventoEpochMs",
+            "fieldPath": "eventEpochMs",
+            "columnName": "eventEpochMs",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -45,36 +39,36 @@
             "notNull": true
           },
           {
-            "fieldPath": "relojConfiable",
-            "columnName": "relojConfiable",
+            "fieldPath": "trustedClock",
+            "columnName": "trustedClock",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "metodo",
-            "columnName": "metodo",
+            "fieldPath": "method",
+            "columnName": "method",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "confianza",
-            "columnName": "confianza",
+            "fieldPath": "confidence",
+            "columnName": "confidence",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "latitud",
-            "columnName": "latitud",
+            "fieldPath": "latitude",
+            "columnName": "latitude",
             "affinity": "REAL"
           },
           {
-            "fieldPath": "longitud",
-            "columnName": "longitud",
+            "fieldPath": "longitude",
+            "columnName": "longitude",
             "affinity": "REAL"
           },
           {
-            "fieldPath": "precisionM",
-            "columnName": "precisionM",
+            "fieldPath": "accuracyM",
+            "columnName": "accuracyM",
             "affinity": "REAL"
           },
           {
@@ -89,25 +83,25 @@
             "notNull": true
           },
           {
-            "fieldPath": "intentos",
-            "columnName": "intentos",
+            "fieldPath": "attempts",
+            "columnName": "attempts",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "ultimoError",
-            "columnName": "ultimoError",
+            "fieldPath": "lastError",
+            "columnName": "lastError",
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "creadoEnMs",
-            "columnName": "creadoEnMs",
+            "fieldPath": "createdAtMs",
+            "columnName": "createdAtMs",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "sincronizadoEnMs",
-            "columnName": "sincronizadoEnMs",
+            "fieldPath": "syncedAtMs",
+            "columnName": "syncedAtMs",
             "affinity": "INTEGER"
           }
         ],
@@ -119,30 +113,30 @@
         },
         "indices": [
           {
-            "name": "index_asistencia_local_syncStatus",
+            "name": "index_local_presence_syncStatus",
             "unique": false,
             "columnNames": [
               "syncStatus"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_asistencia_local_syncStatus` ON `${TABLE_NAME}` (`syncStatus`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_presence_syncStatus` ON `${TABLE_NAME}` (`syncStatus`)"
           },
           {
-            "name": "index_asistencia_local_alumnoId_fecha",
+            "name": "index_local_presence_studentId_date",
             "unique": true,
             "columnNames": [
-              "alumnoId",
-              "fecha"
+              "studentId",
+              "date"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_asistencia_local_alumnoId_fecha` ON `${TABLE_NAME}` (`alumnoId`, `fecha`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_presence_studentId_date` ON `${TABLE_NAME}` (`studentId`, `date`)"
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b35d06aea431a7fc59791d63cec1bebd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '131c67bd4a091d3dee8a6d6cf3e6f1d3')"
     ]
   }
 }

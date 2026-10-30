@@ -1,135 +1,69 @@
 {
   "indexes": [
     {
-      "collectionGroup": "presencias",
+      "collectionGroup": "presences",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "tutorUids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "fecha",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "guardianUids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "date", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "presencias",
+      "collectionGroup": "presences",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "plantelId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fecha",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "horaEntrada",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "entryTime", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "ausencias",
+      "collectionGroup": "absences",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "tutorUids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "fecha",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "guardianUids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "date", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "horarios",
+      "collectionGroup": "schedules",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "profesorUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "diaSemana",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "horaInicio",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "teacherUid", "order": "ASCENDING" },
+        { "fieldPath": "weekday", "order": "ASCENDING" },
+        { "fieldPath": "startTime", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "sesiones",
+      "collectionGroup": "class_sessions",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "profesorUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fecha",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "horaInicio",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "teacherUid", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" },
+        { "fieldPath": "startTime", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "justificantes",
+      "collectionGroup": "justifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "plantelId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "estado",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creadoEn",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "justificantes",
+      "collectionGroup": "justifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "tutorUid",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creadoEn",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "guardianUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "emergencias",
+      "collectionGroup": "emergencies",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "plantelId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "estado",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creadoEn",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

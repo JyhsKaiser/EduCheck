@@ -9,26 +9,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.jyhs.educheck.feature_home.HomePlaceholderScreen
+import com.jyhs.educheck.domain.model.Role
+import com.jyhs.educheck.domain.model.Session
+import com.jyhs.educheck.feature_admin.AdminTabs
+import com.jyhs.educheck.feature_admin.adminGraph
+import com.jyhs.educheck.feature_guardian.GuardianTabs
+import com.jyhs.educheck.feature_guardian.guardianGraph
 import com.jyhs.educheck.feature_login.LoginScreen
+import com.jyhs.educheck.feature_student.StudentTabs
+import com.jyhs.educheck.feature_student.studentGraph
+import com.jyhs.educheck.feature_teacher.TeacherTabs
+import com.jyhs.educheck.feature_teacher.teacherGraph
 
 /**
- * Raíz de la navegación. Por ahora decide entre carga, login y un inicio provisional.
- * En las siguientes etapas cada rol tendrá su propio grafo (Alumno, Tutor, Profesor, Prefecto, Admin).
- * El rol solo decide qué pantallas se muestran; la seguridad real vive en Firestore y el backend.
+ * Navigation root: loading, login, or the graph of the signed-in user's role.
+ * The role only decides which screens are shown; real security lives in the Firestore rules
+ * (custom claim) and in the Edge Functions.
  */
 @Composable
-fun AppNavHost(vm: SesionViewModel = viewModel()) {
-    val sesion by vm.sesion.collectAsStateWithLifecycle()
-    when (val s = sesion) {
-        SesionUi.Cargando -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+fun AppNavHost(vm: SessionViewModel = viewModel()) {
+    val session by vm.session.collectAsStateWithLifecycle()
+    when (val s = session) {
+        SessionUi.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        SesionUi.SinSesion -> LoginScreen()
-        is SesionUi.Activa -> HomePlaceholderScreen(
-            rol = s.sesion.rol,
-            email = s.sesion.email,
-            onCerrarSesion = vm::cerrarSesion,
-        )
+        SessionUi.SignedOut -> LoginScreen()
+        is SessionUi.Active -> RoleHost(session = s.session, onSignOut = vm::signOut)
+    }
+}
+
+@Composable
+private fun RoleHost(session: Session, onSignOut: () -> Unit) {
+    when (session.role) {
+        Role.STUDENT -> RoleScaffold(session, StudentTabs, onSignOut) { studentGraph() }
+        Role.GUARDIAN -> RoleScaffold(session, GuardianTabs, onSignOut) { guardianGraph() }
+        Role.TEACHER -> RoleScaffold(session, TeacherTabs, onSignOut) { teacherGraph() }
+        Role.ADMIN -> RoleScaffold(session, AdminTabs, onSignOut) { nav -> adminGraph(nav) }
     }
 }

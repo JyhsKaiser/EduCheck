@@ -30,3 +30,4 @@ supabase/.branches/
 # Claves de cuentas de servicio (NUNCA al repositorio)
 *-firebase-adminsdk-*.json
 service-account*.json
+*.json
