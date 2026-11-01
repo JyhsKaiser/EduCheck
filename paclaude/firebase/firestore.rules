@@ -1,9 +1,10 @@
 rules_version = '2';
 
 // =====================================================================================
-//  EduCheck · Firestore security rules (v1.3, English schema)
-//  - The role is read from users/{uid} (each evaluation costs one read). Sprint 1 moves it to
-//    a Firebase custom claim set by a Supabase Edge Function; only role() has to change.
+//  EduCheck · Firestore security rules (v1.4, English schema)
+//  - The role comes from the Firebase custom claim `role` (request.auth.token.role), set by the
+//    `set-role` Edge Function. Reading it costs no Firestore read. A user without the claim is
+//    denied everywhere. To deactivate an account, disable it in Firebase Auth.
 //  - The geofence is validated HERE with latlng.distance(): the client cannot register an
 //    entry outside the campus radius + tolerance (single campus: config/campus).
 //  - Roles: STUDENT, GUARDIAN, TEACHER and ADMIN (ADMIN is also the academic coordinator and
@@ -19,13 +20,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function profile() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    // Custom claim set by the backend; '' when the account has no role yet.
+    function role() {
+      return request.auth.token.get('role', '');
     }
 
-    // Sprint 1: replace with request.auth.token.role (custom claim).
     function hasRole(r) {
-      return isSignedIn() && profile().active == true && profile().role == r;
+      return isSignedIn() && role() == r;
     }
 
     function isAdmin() {
@@ -54,7 +55,7 @@ service cloud.firestore {
     // ---------------------------------------------------------------- config
     // Single campus: center (GeoPoint), radiusMeters, toleranceMeters, toleranceMinutes, timeZone, bssids[].
     match /config/campus {
-      allow read: if isSignedIn() && profile().active == true;
+      allow read: if isSignedIn() && role() in ['STUDENT', 'GUARDIAN', 'TEACHER', 'ADMIN'];
       allow write: if isAdmin();
     }
 
@@ -72,9 +73,10 @@ service cloud.firestore {
         && dd().keys().hasOnly(['userUid', 'studentId', 'role', 'status', 'model', 'fcmToken', 'createdAt'])
         && dd().keys().hasAll(['userUid', 'role', 'status', 'createdAt'])
         && dd().userUid == request.auth.uid
-        && dd().role == profile().role
-        && dd().status == (profile().role == 'STUDENT' ? 'PENDING' : 'ACTIVE')
-        && (profile().role != 'STUDENT' ||
+        && dd().role == role()
+        && role() in ['STUDENT', 'GUARDIAN', 'TEACHER', 'ADMIN']
+        && dd().status == (role() == 'STUDENT' ? 'PENDING' : 'ACTIVE')
+        && (role() != 'STUDENT' ||
             (dd().studentId is string &&
              get(/databases/$(database)/documents/students/$(dd().studentId)).data.studentUid == request.auth.uid))
         && dd().createdAt == request.time;

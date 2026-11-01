@@ -6,6 +6,7 @@ import com.jyhs.educheck.core.common.AppResult
 import com.jyhs.educheck.core.common.map
 import com.jyhs.educheck.data.remote.CreateUserRequest
 import com.jyhs.educheck.data.remote.EdgeFunctionsApi
+import com.jyhs.educheck.data.remote.NewStudentDto
 import com.jyhs.educheck.data.remote.SetUserActiveRequest
 import com.jyhs.educheck.data.remote.edgeCall
 import com.jyhs.educheck.domain.model.AppUser
@@ -41,6 +42,9 @@ class FirestoreUserAdminRepository @Inject constructor(
                     name = newUser.name,
                     role = newUser.role.name,
                     studentId = newUser.studentId,
+                    newStudent = newUser.newStudent?.let {
+                        NewStudentDto(it.studentNumber, it.firstNames, it.lastNames)
+                    },
                 ),
             )
         }.map { it.uid }

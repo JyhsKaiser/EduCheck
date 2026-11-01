@@ -69,6 +69,17 @@ object FirestoreFields {
     const val PARTIALS = "partials"
     const val IMPORTED_AT = "importedAt"
 
+    // presences/{studentId}_{date}
+    const val CREATED_AT = "createdAt"
+    const val ENTRY_TIME = "entryTime"
+    const val METHOD = "method"
+    const val CONFIDENCE = "confidence"
+    const val LOCATION = "location"
+    const val BSSID = "bssid"
+    const val TRUSTED_CLOCK = "trustedClock"
+    const val DEVICE_ID = "deviceId"
+    const val CLIENT_UUID = "clientUuid"
+
     // devices/{installId}
     const val USER_UID = "userUid"
     const val MODEL = "model"

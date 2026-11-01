@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Errors -->
+    <string name="error_campus_not_configured">El plantel aún no está configurado. Avisa a Administración.</string>
+    <string name="error_device_not_approved">Tu dispositivo aún no está aprobado por Administración.</string>
+    <string name="error_outside_campus">Estás fuera del plantel (a %1$s m del centro).</string>
+
+    <!-- Entry of the day -->
+    <string name="student_entry_title">Entrada de hoy</string>
+    <string name="student_entry_registered">Entrada registrada a las %1$s</string>
+    <string name="student_entry_missing">Aún no se registra tu entrada.</string>
+    <string name="action_register_entry">Registrar mi entrada ahora</string>
+    <string name="entry_method_wifi">Confirmada con el Wi-Fi del plantel</string>
+    <string name="entry_method_gps">Confirmada con tu ubicación</string>
+    <string name="notification_entry_title">Entrada registrada</string>
+    <string name="notification_entry_text">Tu entrada se registró a las %1$s. %2$s.</string>
+
+    <!-- Device -->
+    <string name="student_device_title">Tu dispositivo</string>
+    <string name="student_device_active_help">Este teléfono puede registrar tu asistencia.</string>
+    <string name="student_device_pending_help">Administración debe aprobar este teléfono antes de que puedas registrar tu entrada.</string>
+    <string name="student_device_revoked_help">Administración revocó este teléfono. Acude a Administración.</string>
+    <string name="action_refresh">Actualizar</string>
+
+    <!-- Permissions -->
+    <string name="student_permissions_title">Permisos</string>
+    <string name="permission_location">Ubicación</string>
+    <string name="permission_background">Ubicación todo el tiempo</string>
+    <string name="permission_notifications">Notificaciones</string>
+    <string name="permission_granted">Concedido</string>
+    <string name="permission_missing">Falta</string>
+    <string name="action_grant">Conceder</string>
+    <string name="permission_background_help">Sin "Permitir todo el tiempo" tu entrada se registra solo cuando abres la app dentro del plantel.</string>
+
+    <!-- Sprint 4: offline queue -->
+    <string name="student_entry_pending_sync">Guardada en tu teléfono. Se enviará en cuanto haya conexión.</string>
+    <string name="student_entry_synced">Enviada a Administración.</string>
+    <string name="student_entry_rejected">No se pudo enviar tu entrada de las %1$s: %2$s.</string>
+    <string name="action_send_now">Enviar ahora</string>
+    <string name="device_status_unknown">Sin verificar</string>
+    <string name="student_device_unknown_help">No hay conexión para consultar la aprobación de este teléfono. Se comprobará al enviar tu entrada.</string>
+    <string name="notification_rejected_title">No se pudo enviar tu entrada</string>
+    <string name="notification_rejected_text">Tu entrada de las %1$s no se envió: %2$s.</string>
+    <string name="error_entry_expired">La entrada tiene más de 23 horas y ya no se puede enviar.</string>
+    <string name="reason_device_not_approved">tu teléfono no está aprobado por Administración</string>
+    <string name="reason_outside_campus">estabas fuera del plantel</string>
+    <string name="reason_entry_expired">pasaron más de 23 horas</string>
+    <string name="reason_forbidden">el servidor la rechazó</string>
+    <string name="reason_unknown">ocurrió un error inesperado</string>
+</resources>

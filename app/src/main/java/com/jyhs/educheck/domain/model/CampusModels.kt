@@ -1,6 +1,9 @@
 package com.jyhs.educheck.domain.model
 
+import kotlinx.serialization.Serializable
+
 /** Single campus: geofence (center + radius), school Wi-Fi and tolerances (config/campus). */
+@Serializable
 data class CampusConfig(
     val name: String,
     val latitude: Double,

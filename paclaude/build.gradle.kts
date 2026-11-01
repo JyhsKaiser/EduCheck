@@ -20,6 +20,10 @@ val supabaseFunctionsUrl: String = localProperties
     .getProperty("supabase.functions.url", "https://example.supabase.co/functions/v1/")
     .let { if (it.endsWith("/")) it else "$it/" }
 
+// Google Maps API key. It lives in local.properties (never versioned):
+//   maps.api.key=AIza...
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY", "")
+
 android {
     namespace = "com.jyhs.educheck"
     compileSdk {
@@ -36,6 +40,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "SUPABASE_FUNCTIONS_URL", "\"$supabaseFunctionsUrl\"")
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
@@ -98,6 +103,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.compose.material.icons.core)
+
+    // Mapa y ubicación
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
 
     // Red: Retrofit + OkHttp + kotlinx.serialization (solo para las Edge Functions y las URLs firmadas)
     implementation(libs.retrofit)

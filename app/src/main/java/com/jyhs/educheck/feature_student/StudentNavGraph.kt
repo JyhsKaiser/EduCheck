@@ -8,7 +8,6 @@ import androidx.navigation.compose.composable
 import com.jyhs.educheck.R
 import com.jyhs.educheck.core.navigation.ACCOUNT_ROUTE
 import com.jyhs.educheck.core.navigation.RoleTab
-import com.jyhs.educheck.core.ui.ComingSoonScreen
 
 private object StudentRoutes {
     const val TODAY = "student/today"
@@ -20,5 +19,5 @@ val StudentTabs = listOf(
 )
 
 fun NavGraphBuilder.studentGraph() {
-    composable(StudentRoutes.TODAY) { ComingSoonScreen(R.string.tab_today) }
+    composable(StudentRoutes.TODAY) { StudentTodayScreen() }
 }

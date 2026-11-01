@@ -2,7 +2,7 @@
 import { accessToken, serviceAccount } from "./firebase.ts";
 import { HttpError } from "./http.ts";
 
-export type FsValue = string | boolean | Date | null;
+export type FsValue = string | boolean | Date | null | string[];
 
 const base = () => `projects/${serviceAccount().project_id}/databases/(default)/documents`;
 
@@ -10,6 +10,7 @@ function encode(v: FsValue): Record<string, unknown> {
   if (v === null) return { nullValue: null };
   if (typeof v === "string") return { stringValue: v };
   if (typeof v === "boolean") return { booleanValue: v };
+  if (Array.isArray(v)) return { arrayValue: v.length === 0 ? {} : { values: v.map((x) => ({ stringValue: x })) } };
   return { timestampValue: v.toISOString() };
 }
 
@@ -59,4 +60,22 @@ export async function fsGetFields(path: string): Promise<Record<string, Record<s
   if (!res.ok) throw new Error(`firestore get failed: ${res.status} ${await res.text()}`);
   const doc = await res.json() as { fields?: Record<string, Record<string, unknown>> };
   return doc.fields ?? {};
+}
+
+/** True if some document of `collection` has `field` equal to the given string. */
+export async function fsExistsWhereEquals(collection: string, field: string, value: string): Promise<boolean> {
+  const res = await fetch(`https://firestore.googleapis.com/v1/${base()}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: collection }],
+        where: { fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { stringValue: value } } },
+        limit: 1,
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`firestore query failed: ${res.status} ${await res.text()}`);
+  const rows = await res.json() as Array<{ document?: unknown }>;
+  return rows.some((r) => r.document !== undefined);
 }

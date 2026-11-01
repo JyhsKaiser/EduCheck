@@ -2,6 +2,8 @@ package com.jyhs.educheck.di
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.MemoryCacheSettings
 import com.jyhs.educheck.BuildConfig
 import dagger.Module
 import dagger.Provides
@@ -29,6 +31,11 @@ object FirebaseModule {
     @Singleton
     fun provideFirestore(): FirebaseFirestore {
         val db = FirebaseFirestore.getInstance()
+        // Room is the only local store of the app: Firestore keeps just an in-memory cache.
+        // (Set before useEmulator, which builds on top of these settings.)
+        db.firestoreSettings = FirebaseFirestoreSettings.Builder(db.firestoreSettings)
+            .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
+            .build()
         if (BuildConfig.USE_FIREBASE_EMULATOR) db.useEmulator(EMULATOR_HOST, 8080)
         return db
     }

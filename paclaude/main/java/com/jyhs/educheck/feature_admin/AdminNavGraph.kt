@@ -16,7 +16,9 @@ import com.jyhs.educheck.core.navigation.RoleTab
 import com.jyhs.educheck.core.ui.ComingSoonScreen
 import com.jyhs.educheck.feature_admin.assignments.AssignmentDetailScreen
 import com.jyhs.educheck.feature_admin.assignments.AssignmentNewScreen
+import com.jyhs.educheck.feature_admin.campus.CampusScreen
 import com.jyhs.educheck.feature_admin.devices.DevicesScreen
+import com.jyhs.educheck.feature_admin.grades.GradesImportScreen
 import com.jyhs.educheck.feature_admin.groups.GroupDetailScreen
 import com.jyhs.educheck.feature_admin.groups.GroupEditScreen
 import com.jyhs.educheck.feature_admin.groups.GroupStudentsScreen
@@ -39,6 +41,8 @@ private object AdminRoutes {
     const val STUDENT_EDIT = "admin/students/edit/{id}"
     const val DEVICES = "admin/devices"
     const val SUBJECTS = "admin/subjects"
+    const val CAMPUS = "admin/campus"
+    const val GRADES_IMPORT = "admin/grades-import"
     const val GROUPS = "admin/groups"
     const val GROUP_EDIT = "admin/groups/edit/{id}"
     const val GROUP_DETAIL = "admin/groups/{id}"
@@ -72,6 +76,8 @@ fun NavGraphBuilder.adminGraph(nav: NavController) {
             onOpenDevices = { nav.navigate(AdminRoutes.DEVICES) },
             onOpenSubjects = { nav.navigate(AdminRoutes.SUBJECTS) },
             onOpenGroups = { nav.navigate(AdminRoutes.GROUPS) },
+            onOpenCampus = { nav.navigate(AdminRoutes.CAMPUS) },
+            onOpenGradesImport = { nav.navigate(AdminRoutes.GRADES_IMPORT) },
         )
     }
 
@@ -151,5 +157,12 @@ fun NavGraphBuilder.adminGraph(nav: NavController) {
         arguments = listOf(navArgument("id") { type = NavType.StringType }),
     ) {
         AssignmentDetailScreen(onBack = { nav.popBackStack() })
+    }
+
+    composable(AdminRoutes.CAMPUS) {
+        CampusScreen(onBack = { nav.popBackStack() })
+    }
+    composable(AdminRoutes.GRADES_IMPORT) {
+        GradesImportScreen(onBack = { nav.popBackStack() })
     }
 }

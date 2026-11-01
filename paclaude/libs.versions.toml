@@ -20,6 +20,9 @@ work = "2.11.2"
 navigationCompose = "2.9.8"
 datastore = "1.2.1"
 coroutines = "1.10.2"
+# --- Maps and location (Sprint 2c) ---
+mapsCompose = "6.6.0"
+playServicesLocation = "21.3.0"
 # --- Edge Functions client (Sprint 0, step 4) ---
 retrofit = "3.0.0"
 okhttp = "4.12.0"          # the version Retrofit 3.0.0 is built against
@@ -66,6 +69,10 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+
+# Maps and location
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 # Network: Supabase Edge Functions over HTTPS + JSON
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }

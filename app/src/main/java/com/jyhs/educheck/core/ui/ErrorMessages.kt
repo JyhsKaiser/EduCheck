@@ -25,5 +25,9 @@ fun ErrorReason.messageRes(): Int = when (this) {
     ErrorReason.LOCATION_UNAVAILABLE -> R.string.error_location_unavailable
     ErrorReason.WIFI_UNAVAILABLE -> R.string.error_wifi_unavailable
     ErrorReason.FILE_UNREADABLE -> R.string.error_file_unreadable
+    ErrorReason.CAMPUS_NOT_CONFIGURED -> R.string.error_campus_not_configured
+    ErrorReason.DEVICE_NOT_APPROVED -> R.string.error_device_not_approved
+    ErrorReason.OUTSIDE_CAMPUS -> R.string.error_outside_campus
+    ErrorReason.ENTRY_EXPIRED -> R.string.error_entry_expired
     ErrorReason.UNKNOWN -> R.string.error_unknown
 }

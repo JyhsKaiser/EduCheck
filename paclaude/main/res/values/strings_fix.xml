@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="field_student_record">Registro del alumno</string>
+    <string name="option_new_student">Crear el registro del alumno ahora</string>
+    <string name="option_existing_student">Vincular con un alumno que aún no tiene cuenta</string>
+    <string name="students_none_without_account">No hay alumnos sin cuenta. Elige "Crear el registro del alumno ahora".</string>
+</resources>

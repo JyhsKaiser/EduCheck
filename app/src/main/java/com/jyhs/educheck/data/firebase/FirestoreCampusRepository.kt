@@ -3,6 +3,7 @@ package com.jyhs.educheck.data.firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.jyhs.educheck.core.common.AppResult
+import com.jyhs.educheck.data.local.CacheStore
 import com.jyhs.educheck.domain.model.CampusConfig
 import com.jyhs.educheck.domain.repository.CampusRepository
 import javax.inject.Inject
@@ -12,12 +13,17 @@ import kotlinx.coroutines.tasks.await
 @Singleton
 class FirestoreCampusRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
+    private val cache: CacheStore,
 ) : CampusRepository {
 
     private val campusDoc
         get() = firestore.collection(FirestoreCollections.CONFIG).document(FirestoreDocs.CAMPUS)
 
-    override suspend fun getCampus(): AppResult<CampusConfig?> = firestoreCall {
+    /** Online it reads Firestore (and refreshes the local cache); offline it returns the last cached configuration. */
+    override suspend fun getCampus(): AppResult<CampusConfig?> =
+        cache.cached("campus", CampusConfig.serializer()) { fetchCampus() }
+
+    private suspend fun fetchCampus(): AppResult<CampusConfig?> = firestoreCall {
         val doc = campusDoc.get().await()
         val center = doc.getGeoPoint(FirestoreFields.CENTER)
         if (!doc.exists() || center == null) {

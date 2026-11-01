@@ -34,6 +34,7 @@ private fun reasonFrom(e: HttpException, json: Json): ErrorReason {
         "email_exists" -> ErrorReason.EMAIL_ALREADY_EXISTS
         "weak_password" -> ErrorReason.WEAK_PASSWORD
         "student_already_linked" -> ErrorReason.ALREADY_LINKED
+        "student_number_exists" -> ErrorReason.DUPLICATE
         "user_not_found", "student_not_found", "not_found" -> ErrorReason.NOT_FOUND
         "forbidden", "missing_token", "invalid_token" -> ErrorReason.FORBIDDEN
         "internal_error", null -> ErrorReason.UNKNOWN

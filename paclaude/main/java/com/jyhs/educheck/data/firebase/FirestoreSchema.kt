@@ -57,6 +57,18 @@ object FirestoreFields {
     const val END_TIME = "endTime"
     const val ROOM = "room"
 
+    // config/campus
+    const val CENTER = "center"
+    const val RADIUS_METERS = "radiusMeters"
+    const val TOLERANCE_METERS = "toleranceMeters"
+    const val TOLERANCE_MINUTES = "toleranceMinutes"
+    const val TIME_ZONE = "timeZone"
+    const val BSSIDS = "bssids"
+
+    // grades/{assignmentId}_{studentId}
+    const val PARTIALS = "partials"
+    const val IMPORTED_AT = "importedAt"
+
     // devices/{installId}
     const val USER_UID = "userUid"
     const val MODEL = "model"

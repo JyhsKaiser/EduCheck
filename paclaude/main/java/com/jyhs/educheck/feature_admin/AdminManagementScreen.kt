@@ -22,6 +22,8 @@ fun AdminManagementScreen(
     onOpenDevices: () -> Unit,
     onOpenSubjects: () -> Unit,
     onOpenGroups: () -> Unit,
+    onOpenCampus: () -> Unit,
+    onOpenGradesImport: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         Text(
@@ -34,6 +36,8 @@ fun AdminManagementScreen(
         ManagementItem(R.string.admin_subjects_title, R.string.admin_subjects_subtitle, onOpenSubjects)
         ManagementItem(R.string.admin_groups_title, R.string.admin_groups_subtitle, onOpenGroups)
         ManagementItem(R.string.admin_devices_title, R.string.admin_devices_subtitle, onOpenDevices)
+        ManagementItem(R.string.admin_campus_title, R.string.admin_campus_subtitle, onOpenCampus)
+        ManagementItem(R.string.admin_grades_title, R.string.admin_grades_subtitle, onOpenGradesImport)
     }
 }
 
