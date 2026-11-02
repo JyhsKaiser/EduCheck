@@ -79,3 +79,51 @@ export async function fsExistsWhereEquals(collection: string, field: string, val
   const rows = await res.json() as Array<{ document?: unknown }>;
   return rows.some((r) => r.document !== undefined);
 }
+
+// ---------------------------------------------------------------- queries and decoding
+export type FsFields = Record<string, Record<string, unknown>>;
+export type FsDoc = { id: string; fields: FsFields };
+
+/** Runs a structured query and returns the documents (id = last segment of the document name). */
+export async function fsRunQuery(structuredQuery: Record<string, unknown>): Promise<FsDoc[]> {
+  const res = await fetch(`https://firestore.googleapis.com/v1/${base()}:runQuery`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery }),
+  });
+  if (!res.ok) throw new Error(`firestore query failed: ${res.status} ${await res.text()}`);
+  const rows = await res.json() as Array<{ document?: { name: string; fields?: FsFields } }>;
+  return rows
+    .filter((r) => r.document !== undefined)
+    .map((r) => ({ id: r.document!.name.split("/").pop()!, fields: r.document!.fields ?? {} }));
+}
+
+/** Documents of `collection` whose `field` is one of `values` (at most 30 values per query). */
+export async function fsQueryIn(collection: string, field: string, values: string[]): Promise<FsDoc[]> {
+  const docs: FsDoc[] = [];
+  for (let i = 0; i < values.length; i += 30) {
+    const chunk = values.slice(i, i + 30);
+    docs.push(...await fsRunQuery({
+      from: [{ collectionId: collection }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: field },
+          op: "IN",
+          value: { arrayValue: { values: chunk.map((v) => ({ stringValue: v })) } },
+        },
+      },
+    }));
+  }
+  return docs;
+}
+
+export const fsString = (f: FsFields, key: string): string | undefined =>
+  typeof f[key]?.stringValue === "string" ? f[key].stringValue as string : undefined;
+
+export const fsTimestamp = (f: FsFields, key: string): Date | undefined =>
+  typeof f[key]?.timestampValue === "string" ? new Date(f[key].timestampValue as string) : undefined;
+
+export const fsStringArray = (f: FsFields, key: string): string[] => {
+  const values = (f[key]?.arrayValue as { values?: Array<{ stringValue?: string }> } | undefined)?.values ?? [];
+  return values.map((v) => v.stringValue).filter((v): v is string => typeof v === "string");
+};

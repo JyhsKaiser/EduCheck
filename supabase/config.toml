@@ -44,6 +44,11 @@ verify_jwt = false
 verify_jwt = false
 [functions.limpiar-archivos]
 verify_jwt = false
+[functions.dispatch-notifications]
+verify_jwt = false
+[functions.send-push]
+verify_jwt = false
+
 
 [functions.ping]
 enabled = true

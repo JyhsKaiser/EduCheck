@@ -1,4 +1,4 @@
-# EduCheck · Firestore data model and rules (v1.9)
+# EduCheck · Firestore data model and rules (v1.10)
 
 Source of truth: Firestore (Spark plan). Designed for the **free quota** (50,000 reads and 20,000 writes per day).
 Server-side work (cron, FCM push, signed URLs, custom claims) runs in **Supabase Edge Functions** (section 6).
@@ -121,3 +121,17 @@ Copies of names and lists exist so each reader needs a single read. The ADMIN ap
 **Sending.** `requestSync` enqueues a unique WorkManager job with a "connected" constraint and exponential backoff (30 s); it is requested when an entry is saved and every time the "Hoy" screen is opened. For each queued entry of the signed-in student, with fresh data: older than 23.5 h → REJECTED; the server already has it → SYNCED; outside the campus with the current configuration → REJECTED; school Wi-Fi no longer listed → sent as GEOFENCE (confidence 0, no BSSID); rules refuse it → REJECTED; no connection → stays PENDING and is retried without limit; any other temporary error → retried up to 8 attempts, then REJECTED. The original `clientUuid` is written to Firestore, so a duplicate send is harmless.
 
 **States** of an entry: PENDING (saved, not sent), SYNCED, REJECTED (reason in `lastError`).
+
+## 12. Push notifications (Sprint 5)
+**Tokens.** Every signed-in user (guardian, teacher, ADMIN and student) registers this phone's FCM token in `devices/{installId}_{uid}.fcmToken` (a WorkManager job that waits for a connection, runs at every app start and whenever FCM rotates the token). A guardian, teacher or ADMIN phone is created `ACTIVE`; a student phone follows the normal approval flow (`PENDING`), and the backend only pushes to `ACTIVE` devices. When the user signs out online the token is blanked (`""`: the rules only accept a string), so a shared phone stops receiving that user's notifications.
+
+**Who sends.** Only the backend (RF-B08, FCM HTTP v1 with the service account stored as a Supabase secret). The client never sends a push. Messages are *data* messages with high priority (`type`, `title`, `body` and ids); the app builds the notification in the channel of its `type` (`CHECK_IN`, `ABSENCE`, `JUSTIFICATION`, `EMERGENCY`, anything else → administration).
+
+**Entry notification (RF-T02).** `dispatch-notifications` runs every minute (pg_cron + pg_net, header `x-cron-secret`) and can also be run by hand by an ADMIN. It reads the presences created since a cursor kept in Supabase Postgres (`push_state`, with a 2-minute overlap because commits are not perfectly ordered), and for each guardian of the presence (`guardianUids`, copied when the presence was written):
+1. It creates `notifications/{presenceId}_{guardianUid}` with the precondition "does not exist". If it already exists the guardian was told before and nothing more happens (this makes the overlap harmless).
+2. Only then it sends the push to the guardian's `ACTIVE` devices that have a token. An invalid token (uninstalled app) is blanked.
+So a notification is delivered at most once, normally within a minute of the entry reaching the server (an entry that is synced late is announced when it arrives, with the real time of the entry in campus time). The guardian must be linked to the student *before* the entry is registered, because the list is copied into the presence.
+
+**Quota.** About 1,440 Edge Function calls a day for the cron, 1 Firestore read per new presence, 1 per student not seen in the run, and 1 write per guardian notified. With the test data of this project it is negligible.
+
+**`send-push`.** An ADMIN can send a test push to any user (`POST /send-push {uid, title?, body?}`), useful to check that a phone is registered.

@@ -29,6 +29,7 @@ paclaude
 supabase/.env
 supabase/.temp/
 supabase/.branches/
+supabase/cron/schedule.sql.example
 # Claves de cuentas de servicio (NUNCA al repositorio)
 *-firebase-adminsdk-*.json
 service-account*.json

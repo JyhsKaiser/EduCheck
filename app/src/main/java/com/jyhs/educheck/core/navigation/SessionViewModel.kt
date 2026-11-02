@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jyhs.educheck.domain.model.Session
 import com.jyhs.educheck.domain.usecase.ObserveSessionUseCase
+import com.jyhs.educheck.domain.usecase.RequestPushTokenRegistrationUseCase
 import com.jyhs.educheck.domain.usecase.RestoreSessionUseCase
 import com.jyhs.educheck.domain.usecase.SignOutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +12,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -25,10 +27,13 @@ class SessionViewModel @Inject constructor(
     observeSession: ObserveSessionUseCase,
     private val restoreSessionUseCase: RestoreSessionUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val requestPushToken: RequestPushTokenRegistrationUseCase,
 ) : ViewModel() {
 
     val session: StateFlow<SessionUi> = observeSession()
         .map { s -> if (s == null) SessionUi.SignedOut else SessionUi.Active(s) }
+        // Any signed-in user (guardian, teacher, admin, student) registers this phone for push notifications.
+        .onEach { if (it is SessionUi.Active) requestPushToken() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, SessionUi.Loading)
 
     init {

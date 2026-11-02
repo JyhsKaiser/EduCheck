@@ -50,6 +50,7 @@ export async function verifyCaller(req: Request): Promise<Caller> {
 const SCOPES = [
   "https://www.googleapis.com/auth/identitytoolkit",
   "https://www.googleapis.com/auth/datastore",
+  "https://www.googleapis.com/auth/firebase.messaging",
 ].join(" ");
 
 let cachedToken: { value: string; expiresAtMs: number } | null = null;

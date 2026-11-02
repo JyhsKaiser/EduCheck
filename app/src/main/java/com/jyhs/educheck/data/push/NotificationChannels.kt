@@ -13,6 +13,15 @@ object NotificationChannels {
     const val EMERGENCIES = "emergencies"
     const val ADMINISTRATION = "administration"
 
+    /** Channel for the `type` of a push message sent by the backend. */
+    fun forType(type: String?): String = when (type) {
+        "CHECK_IN" -> CHECK_INS
+        "ABSENCE" -> ABSENCES
+        "JUSTIFICATION" -> JUSTIFICATIONS
+        "EMERGENCY" -> EMERGENCIES
+        else -> ADMINISTRATION
+    }
+
     fun create(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannels(
