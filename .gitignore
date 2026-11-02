@@ -23,6 +23,8 @@ ui-debug.log
 firestore-debug.log
 .firebase/
 
+paclaude
+
 # Supabase: secretos y archivos locales del CLI
 supabase/.env
 supabase/.temp/
